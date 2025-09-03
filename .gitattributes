@@ -1,0 +1,39 @@
+# --- Normalizar finales de línea ---
+# Todos los archivos de texto se normalizan a LF en el repo
+* text=auto eol=lf
+
+# --- Archivos de código (siempre LF) ---
+*.py text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+
+# --- Archivos de configuración ---
+*.toml text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+*.conf text eol=lf
+
+# --- Archivos de Windows (mantener CRLF si corresponde) ---
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# --- Archivos binarios (no tocar) ---
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+*.zip binary
+*.tar.gz binary
+*.exe binary

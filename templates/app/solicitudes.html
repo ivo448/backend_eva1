@@ -1,0 +1,35 @@
+{% extends "app/base.html" %}
+{% block contenido %}
+
+<div class="container mt-4">
+  <!-- Formulario -->
+  <div class="card mb-4">
+    <div class="card-header">Nueva Solicitud</div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Crear</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Lista de solicitudes -->
+  <div class="card">
+    <div class="card-header">Solicitudes</div>
+    <ul class="list-group list-group-flush">
+      {% for s in solicitudes %}
+        <li class="list-group-item">
+          <strong>{{ s.nombre }}</strong> — {{ s.usuario.username }}
+          <br>
+          <small class="text-muted">Fecha: {{ s.fecha }}</small>
+          <p>{{ s.descripcion }}</p>
+        </li>
+      {% empty %}
+        <li class="list-group-item">No hay solicitudes registradas.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+{% endblock %}

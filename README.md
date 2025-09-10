@@ -1,4 +1,4 @@
->> Instalación
+> Instalación
 
 Clonar el repositorio:
    git clone https://github.com/tu_usuario/backend-eva1.git
@@ -20,7 +20,7 @@ Crear entorno virtual:
   Recolectar archivos estáticos:
     python manage.py collectstatic --noinput
 
->> Ejecución en local
+> Ejecución en local
 
 Inicia el servidor de desarrollo con:
   python manage.py runserver
@@ -28,7 +28,7 @@ Inicia el servidor de desarrollo con:
   Accede en tu navegador a:
     http://127.0.0.1:8000/
 
->> Despliegue en PythonAnywhere
+> Despliegue en PythonAnywhere
 
 Subir el proyecto al servidor (repositorio Git o ZIP).
 

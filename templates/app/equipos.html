@@ -1,38 +1,48 @@
 {% extends "app/base.html" %}
+
 {% block contenido %}
-
-<div class="max-w-3xl mx-auto mt-8">
-  <!-- Formulario -->
-  <div class="bg-white p-6 rounded-xl shadow mb-6">
-    <h2 class="text-xl font-bold mb-4">Agregar Equipo</h2>
-    <form method="post" class="space-y-4">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-        Guardar
-      </button>
-    </form>
+  <!-- Formulario HTML puro -->
+    <div class="card-header">Agregar Equipo</div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="nombre" class="form-label">Nombre</label>
+          <input type="text" class="form-control" id="nombre" name="nombre" required>
+        </div>
+        <div class="mb-3">
+          <label for="descripcion" class="form-label">Descripción</label>
+          <textarea class="form-control" id="descripcion" name="descripcion" rows="2"></textarea>
+        </div>
+        <div class="mb-3 form-check">
+          <input type="checkbox" class="form-check-input" id="disponible" name="disponible" checked>
+          <label class="form-check-label" for="disponible">Disponible</label>
+        </div>
+        <button type="submit" class="btn btn-primary">
+          Guardar
+        </button>
+      </form>
+    </div>
   </div>
+{% endblock %}
 
+{% block lista %}
   <!-- Lista de equipos -->
-  <div class="bg-white p-6 rounded-xl shadow">
-    <h2 class="text-xl font-bold mb-4">Lista de Equipos</h2>
-    <ul class="space-y-2">
-      {% for equipo in equipos %}
-        <li class="border-b py-2 flex justify-between items-center">
+      <ul class="list-group">
+        {% for equipo in equipos %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
           <span>{{ equipo.nombre }} - 
             {% if equipo.disponible %}
-              <span class="text-green-600">Disponible</span>
+              <span class="text-success">Disponible</span>
             {% else %}
-              <span class="text-red-600">No disponible</span>
+              <span class="text-danger">No disponible</span>
             {% endif %}
           </span>
         </li>
-      {% empty %}
-        <li>No hay equipos registrados.</li>
-      {% endfor %}
-    </ul>
+        {% empty %}
+        <li class="list-group-item">No hay equipos registrados.</li>
+        {% endfor %}
+      </ul>
+    </div>
   </div>
-</div>
-
 {% endblock %}

@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import Equipo, Solicitud, User
 from .forms import EquipoForm, SolicitudForm, RegistroUsuarioForm
 from django.contrib.auth import views as auth_views
@@ -22,14 +22,17 @@ def login(request):
     loginView = auth_views.LoginView.as_view(template_name=tLogin)
     return loginView(request)
 
+@login_required
 def logout(request):
     logoutView = auth_views.LogoutView.as_view(next_page='login')
     return logoutView(request)
 
+@login_required
 def base(request):
     data = {}
     return render(request, tBase, data)
 
+@login_required
 def equipos(request):
     equipos = Equipo.objects.all()
 
@@ -46,25 +49,35 @@ def equipos(request):
     }
     return render(request, tEquipos, data)
 
+@login_required
 def solicitudes(request):
-    solicitudes = Solicitud.objects.all()
+    solicitudes = Solicitud.objects.all().order_by('-fecha')
     usuarios = User.objects.all()
     if request.method == "POST":
-        form = SolicitudForm(request.POST)
-        if form.is_valid():
-            form.save()
+        nombre = request.POST.get('nombre')
+        usuario_id = request.POST.get('usuario')
+        descripcion = request.POST.get('descripcion')
+        if nombre and usuario_id and descripcion:
+            usuario = User.objects.get(pk=usuario_id)
+            Solicitud.objects.create(
+                nombre=nombre,
+                usuario=usuario,
+                descripcion=descripcion
+            )
             return redirect('solicitudes')
-    else:
-        form = SolicitudForm()
-        data = {
+        else:
+            return render(request, tSolicitudes, {
+                "solicitudes": solicitudes,
+                "usuarios": usuarios,
+                "error": "Todos los campos son obligatorios."
+            })
+    return render(request, tSolicitudes, {
         "solicitudes": solicitudes,
         "usuarios": usuarios,
-        "form": form
-    }
-    return render(request, tSolicitudes, data)
+        "title": "Solicitudes"
+    })
 
 @login_required
-@permission_required('auth.view_user', raise_exception=True)
 def usuarios(request):
     if request.method == 'POST':
         form = RegistroUsuarioForm(request.POST)

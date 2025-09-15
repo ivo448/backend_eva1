@@ -1,13 +1,5 @@
 > Instalación
 
-Clonar el repositorio:
-   git clone https://github.com/tu_usuario/backend-eva1.git
-   cd backend-eva1
-   
-Crear entorno virtual:
-  python -m venv venv
-  venv\Scripts\activate
-  
   Instalar dependencias:
     pip install -r requirements.txt
     

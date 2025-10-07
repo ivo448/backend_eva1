@@ -17,3 +17,19 @@ class Solicitud(models.Model):
 
     def __str__(self):
         return self.nombre
+
+class Perfil(models.Model):
+    # Relación uno a uno con el modelo User de Django
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE) 
+    telefono = models.CharField(max_length=15, blank=True)
+    bio = models.TextField(blank=True)
+    fecha_nacimiento = models.DateField(null=True, blank=True)
+    
+    def __str__(self):
+        return f'Perfil de {self.usuario.username}'
+    
+class Mantencion():
+    fecha_inicio = models.DateField()
+    fecha_fin = models.DateField()
+    descripcion = models.CharField()
+    responsable = models.CharField()

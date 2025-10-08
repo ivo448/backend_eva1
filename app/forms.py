@@ -11,14 +11,15 @@ class EquipoForm(forms.ModelForm):
 class SolicitudForm(forms.ModelForm):
     class Meta:
         model = Solicitud
-        fields = ['nombre', 'usuario', 'descripcion']
+        fields = ['nombre', 'fecha', 'descripcion']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
-            'usuario': forms.Select(attrs={'class': 'form-select'}),
+            'fecha': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            #'usuario': forms.Select(attrs={'class': 'form-select'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control'}),
         }
 
-class RegistroUsuarioForm(UserCreationForm):
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'password1', 'password2']
+# class RegistroUsuarioForm(UserCreationForm):
+#     class Meta:
+#         model = User
+#         fields = ['username', 'email', 'password1', 'password2']

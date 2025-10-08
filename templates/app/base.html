@@ -33,6 +33,12 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#">Configuración</a>
                     </li>
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-link nav-link text-danger">Logout</button>
+                        </form>
+                    </li>
                 </ul>
             </div>
         </div>

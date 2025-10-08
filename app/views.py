@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from .models import Equipo, Solicitud, User
-from .forms import EquipoForm, SolicitudForm, RegistroUsuarioForm
+from .forms import EquipoForm, SolicitudForm # RegistroUsuarioForm
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 tDashboard = 'app/dashboard.html'
@@ -8,19 +9,29 @@ tSolicitudes = 'app/solicitudes.html'
 tEquipos = 'app/equipos.html'
 tUsuarios = 'app/usuarios.html'
 tBase = 'app/base.html'
+tLogin = 'app/login.html'
 
+@login_required
 def dashboard(request):
     data = {}
     return render(request, tDashboard, data)
 
-def loginnnn(request):
+@login_required
+def login(request):
     data = {}
-    return render(request, 'app/login.html', data)
+    return render(request, tLogin, data)
 
+@login_required
+def logout(request):
+    data = {}
+    return render(request, tLogin, data)
+
+@login_required
 def base(request):
     data = {}
     return render(request, tBase, data)
 
+@login_required
 def equipos(request):
     equipos = Equipo.objects.all()
 
@@ -37,6 +48,7 @@ def equipos(request):
     }
     return render(request, tEquipos, data)
 
+@login_required
 def solicitudes(request):
     solicitudes = Solicitud.objects.all()
     usuarios = User.objects.all()
@@ -49,11 +61,11 @@ def solicitudes(request):
         form = SolicitudForm()
         data = {
         "solicitudes": solicitudes,
-        "usuarios": usuarios,
         "form": form
     }
     return render(request, tSolicitudes, data)
 
+@login_required
 def usuarios(request):
     if request.method == 'POST':
         form = RegistroUsuarioForm(request.POST)

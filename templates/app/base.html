@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pañol</title>
+    <title>{% block title %}Pañol{% endblock %}</title>
     <!-- Bootstrap CSS -->
     <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
 </head>
@@ -38,9 +38,8 @@
         </div>
     </nav>
 
-    <div class="container">
+    <div class="container mt-4">
         {% block contenido %}
-            <h2>No name</h2>
         {% endblock %}
     </div>
 

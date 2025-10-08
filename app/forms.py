@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 class EquipoForm(forms.ModelForm):
     class Meta:
         model = Equipo
-        fields = ['nombre', 'descripcion', 'disponible']
+        fields = ['nombre', 'descripcion', 'cantidad']
 
 class SolicitudForm(forms.ModelForm):
     class Meta:

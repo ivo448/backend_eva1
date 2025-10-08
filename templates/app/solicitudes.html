@@ -1,35 +1,38 @@
 {% extends "app/base.html" %}
-{% block contenido %}
+{% block title %}Solicitudes - Pañol{% endblock %}
 
+{% block contenido %}
 <div class="container mt-4">
-  <!-- Formulario -->
-  <div class="card mb-4">
-    <div class="card-header">Nueva Solicitud</div>
+  <!-- Formulario de creación -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-primary text-white">
+      Nueva Solicitud
+    </div>
     <div class="card-body">
-      <form method="post">
+      <form method="post" class="needs-validation" novalidate>
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Crear</button>
+        <button type="submit" class="btn btn-success">Crear Solicitud</button>
       </form>
     </div>
   </div>
 
   <!-- Lista de solicitudes -->
-  <div class="card">
-    <div class="card-header">Solicitudes</div>
+  <div class="card shadow-sm">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">Solicitudes registradas</h5>
+    </div>
     <ul class="list-group list-group-flush">
       {% for s in solicitudes %}
         <li class="list-group-item">
           <strong>{{ s.nombre }}</strong> — {{ s.usuario.username }}
-          <br>
+          <p class="mb-1">{{ s.descripcion }}</p>
           <small class="text-muted">Fecha: {{ s.fecha }}</small>
-          <p>{{ s.descripcion }}</p>
         </li>
       {% empty %}
-        <li class="list-group-item">No hay solicitudes registradas.</li>
+        <li class="list-group-item text-center text-muted">No hay solicitudes registradas.</li>
       {% endfor %}
     </ul>
   </div>
 </div>
-
 {% endblock %}

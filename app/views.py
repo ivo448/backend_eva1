@@ -4,6 +4,8 @@ from app.forms import FormEquipo, FormSolicitud, FormMantencion
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.forms import AuthenticationForm
+from bootstrap_modal_forms.generic import BSModalCreateView, BSModalDeleteView
+from django.urls import reverse_lazy
 
 # Create your views here.
 
@@ -87,7 +89,8 @@ def agregarMantencion(request):
         if form.is_valid():
             form.save()
             return redirect('mantenciones')
-    return render(request, 'app/agregarMantencion.html', {'form': form})
+    data = {'form': form}
+    return render(request, 'app/agregarMantencion.html', data)
 
 @login_required
 def editarMantencion(request, id):
@@ -98,13 +101,17 @@ def editarMantencion(request, id):
         if form.is_valid():
             form.save()
             return redirect('mantenciones')
-    data = {'form': form}
-    return render(request, 'app/editarMantencion.html', data)
+    data = {'form': form, 'id': id}
+    return render(request, 'app/agregarMantencion.html', data)
 
 @login_required
 def eliminarMantencion(request, id):
     mantencion = Mantencion.objects.get(id=id)
-    if request.method == "POST":
-        mantencion.delete()
-        return redirect('mantenciones')
-    return render(request, 'app/eliminarMantencion.html')
+    mantencion.delete()
+    return redirect('mantenciones')
+
+class MantencionDeleteView(BSModalDeleteView):
+    model = Mantencion
+    template_name = 'app/eliminar_mantencion_modal.html'
+    success_message = 'Mantención eliminada correctamente.'
+    success_url = reverse_lazy('mantenciones')

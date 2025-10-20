@@ -26,4 +26,4 @@ class Mantencion(models.Model):
     responsable = models.CharField(max_length=100)
 
     def __str__(self):
-        return f'Mantención {self.id} - {self.responsable}'
+        return self.nombre

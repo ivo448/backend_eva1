@@ -12,7 +12,7 @@
       <form method="post" class="needs-validation" novalidate>
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit" class="btn btn-success">Crear Mantencion</button>
+        <button type="submit" class="btn btn-success">{% if id %}Editar Mantencion{% else %}Crear Mantencion{% endif %}</button>
       </form>
     </div>
   </div>

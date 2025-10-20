@@ -1,4 +1,5 @@
 {% extends "app/index.html" %}
+{% load static %}
 {% block title %}Mantenciones - Pañol{% endblock %}
 
 {% block contenido %}
@@ -18,6 +19,14 @@
           <p class="mb-1">{{ s.fecha_inicio }} - {{ s.fecha_fin }}</p>
           <p class="mb-1">{{ s.descripcion }}</p>
           <p class="mb-1">{{ s.responsable }}</p>
+          <a href="{% url 'editarMantencion' s.id %}" class="btn btn-sm btn-warning">Editar</a>
+          <button type="button" 
+                  class="btn btn-sm btn-danger" 
+                  data-bs-toggle="modal"
+                  data-bs-target="#modal"
+                  data-form-url="{% url 'eliminarMantencion' s.id %}">
+            Eliminar
+          </button>
         </li>
       {% empty %}
         <li class="list-group-item text-center text-muted">No hay mantenciones registradas.</li>
@@ -28,4 +37,27 @@
     <p class="text-center text-muted">No hay mantenciones registradas.</p>
   {% endif %}
 </div>
+
+<!-- Modal -->
+<div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <!-- El contenido del modal se cargará aquí -->
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extrascripts %}
+<script src="{% static 'js/jquery.bootstrap.modal.forms.js' %}"></script>
+<script>
+$(document).ready(function() {
+    $(".delete-mantencion").each(function () {
+        $(this).modalForm({
+            formURL: $(this).data('form-url'),
+            modalID: "#modal"
+        });
+    });
+});
+</script>
 {% endblock %}

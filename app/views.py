@@ -1,83 +1,110 @@
 from django.shortcuts import render, redirect
-from .models import Equipo, Solicitud, User
-from .forms import EquipoForm, SolicitudForm # RegistroUsuarioForm
+from .models import Equipo, Solicitud, Mantencion
+from app.forms import FormEquipo, FormSolicitud, FormMantencion
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login as auth_login, logout as auth_logout
+from django.contrib.auth.forms import AuthenticationForm
 
 # Create your views here.
-tDashboard = 'app/dashboard.html'
-tSolicitudes = 'app/solicitudes.html'
-tEquipos = 'app/equipos.html'
-tUsuarios = 'app/usuarios.html'
-tBase = 'app/base.html'
-tLogin = 'app/login.html'
 
-@login_required
-def dashboard(request):
-    data = {}
-    return render(request, tDashboard, data)
-
-@login_required
-def login(request):
-    data = {}
-    return render(request, tLogin, data)
-
-@login_required
-def logout(request):
-    data = {}
-    return render(request, tLogin, data)
-
-@login_required
-def base(request):
-    data = {}
-    return render(request, tBase, data)
-
-@login_required
-def equipos(request):
-    equipos = Equipo.objects.all()
-
+def login_view(request):
     if request.method == "POST":
-        form = EquipoForm(request.POST)
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            auth_login(request, form.get_user())
+            next_url = request.POST.get('next') or request.GET.get('next') or 'index'
+            return redirect(next_url)
+    else:
+        form = AuthenticationForm()
+    return render(request, 'app/login.html', {'form': form})
+
+@login_required
+def logout_view(request):
+    auth_logout(request)
+    return redirect('login')
+
+@login_required
+def index(request):
+    data = {}
+    return render(request, 'app/index.html', data)
+
+# -- CRUD EQUIPOS --
+@login_required
+def listadoEquipos(request):
+    equipos = Equipo.objects.all()
+    data = {
+        'equipos': equipos
+    }
+    return render(request, 'app/equipos.html', data)
+
+@login_required
+def agregarEquipo(request):
+    form = FormEquipo()
+    if request.method == "POST":
+        form = FormEquipo(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('equipos')  # recarga la misma página
-    else:
-        form = EquipoForm()
+            return redirect('equipos')
     data = {
-        "equipos": equipos,
         "form": form
     }
-    return render(request, tEquipos, data)
+    return render(request, 'app/agregarEquipo.html', data)
+
+# -- CRUD SOLICITUDES --
+@login_required
+def listadoSolicitudes(request):
+    solicitudes = Solicitud.objects.all()
+    data = {
+        'solicitudes': solicitudes
+    }
+    return render(request, 'app/solicitudes.html', data)
 
 @login_required
-def solicitudes(request):
-    solicitudes = Solicitud.objects.all()
-    usuarios = User.objects.all()
+def agregarSolicitud(request):
+    form = FormSolicitud()
     if request.method == "POST":
-        form = SolicitudForm(request.POST)
+        form = FormSolicitud(request.POST)
         if form.is_valid():
             form.save()
             return redirect('solicitudes')
-    else:
-        form = SolicitudForm()
-        data = {
-        "solicitudes": solicitudes,
+    data = {
         "form": form
     }
-    return render(request, tSolicitudes, data)
+    return render(request, 'app/agregarSolicitud.html', data)
+
+# -- CRUD MANTENCIONES --
+@login_required
+def listadoMantenciones(request):
+    mantenciones = Mantencion.objects.all()
+    data = {'mantenciones': mantenciones}
+    return render(request, 'app/mantenciones.html', data)
 
 @login_required
-def usuarios(request):
-    if request.method == 'POST':
-        form = RegistroUsuarioForm(request.POST)
+def agregarMantencion(request):
+    form = FormMantencion()
+    if request.method == "POST":
+        form = FormMantencion(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('registrar_usuario')  # recarga la misma página
-    else:
-        form = RegistroUsuarioForm()
-    
-    usuarios = User.objects.all()  # obtenemos todos los usuarios
+            return redirect('mantenciones')
+    return render(request, 'app/agregarMantencion.html', {'form': form})
 
-    return render(request, tUsuarios, {
-        'form': form,
-        'usuarios': usuarios
-    })
+@login_required
+def editarMantencion(request, id):
+    mantencion = Mantencion.objects.get(id=id)
+    form = FormMantencion(instance=mantencion)
+    if request.method == "POST":
+        form = FormMantencion(request.POST, instance=mantencion)
+        if form.is_valid():
+            form.save()
+            return redirect('mantenciones')
+    data = {'form': form}
+    return render(request, 'app/editarMantencion.html', data)
+
+@login_required
+def eliminarMantencion(request, id):
+    mantencion = Mantencion.objects.get(id=id)
+    if request.method == "POST":
+        mantencion.delete()
+        return redirect('mantenciones')
+    return render(request, 'app/eliminarMantencion.html')

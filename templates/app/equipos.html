@@ -1,24 +1,12 @@
-{% extends "app/base.html" %}
+{% extends "app/index.html" %}
 {% block title %}Equipos - Pañol{% endblock %}
 
 {% block contenido %}
 <div class="container mt-4">
-
-  <!-- Formulario -->
-  <div class="card mb-4 shadow-sm">
-    <div class="card-header bg-primary text-white">
-      Agregar nuevo equipo
-    </div>
-    <div class="card-body">
-      <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-success">Guardar</button>
-      </form>
-    </div>
-  </div>
+  <a href="{% url 'agregarEquipo' %}" class="btn btn-primary mb-3">Agregar equipo</a>
 
   <!-- Lista de equipos -->
+  {% if equipos %}
   <div class="card shadow-sm">
     <div class="card-header bg-light">
       <h5 class="mb-0">Lista de Equipos</h5>
@@ -41,5 +29,6 @@
       {% endfor %}
     </ul>
   </div>
+  {% endif %}
 </div>
 {% endblock %}

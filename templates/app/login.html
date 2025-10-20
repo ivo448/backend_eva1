@@ -1,9 +1,17 @@
-
 <div class="container mt-5" style="max-width: 400px;">
   <h2 class="text-center">Iniciar sesión</h2>
   <form method="post">
     {% csrf_token %}
-    {{ form.as_p }}
+    {{ form.non_field_errors }}
+    <div>
+      {{ form.username.label_tag }}<br>
+      {{ form.username }}
+    </div>
+    <div>
+      {{ form.password.label_tag }}<br>
+      {{ form.password }}
+    </div>
+    <input type="hidden" name="next" value="{{ request.GET.next }}">
     <button type="submit" class="btn btn-primary w-100">Ingresar</button>
   </form>
 </div>

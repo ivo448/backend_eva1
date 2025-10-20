@@ -15,17 +15,23 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.contrib.auth import views as auth_views
 from django.urls import path
 from app import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('dashboard/', views.dashboard, name="dashboard"),
-    path('solicitudes/', views.solicitudes, name="solicitudes"),
-    path('equipos/', views.equipos, name='equipos'),
-    path('usuarios/', views.usuarios, name='usuarios'),
-    path('login/', auth_views.LoginView.as_view(template_name='app/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-    path('', views.base)
+    path('', views.index, name="index"),
+    path('login/', views.login_view, name="login"),
+    path('logout/', views.logout_view, name="logout"),
+    # -- CRUD SOLICITUDES --
+    path('solicitudes/', views.listadoSolicitudes, name="solicitudes"),
+    path('agregarSolicitud/', views.agregarSolicitud, name="agregarSolicitud"),
+    # -- CRUD EQUIPOS --
+    path('equipos/', views.listadoEquipos, name="equipos"),
+    path('agregarEquipo/', views.agregarEquipo, name="agregarEquipo"),
+    # -- CRUD MANTENCIONES --
+    path('mantenciones/', views.listadoMantenciones, name="mantenciones"),
+    path('agregarMantencion/', views.agregarMantencion, name="agregarMantencion"),
+    path('editarMantencion/<int:id>/', views.editarMantencion, name="editarMantencion"),
+    path('eliminarMantencion/<int:id>/', views.eliminarMantencion, name="eliminarMantencion"),
 ]

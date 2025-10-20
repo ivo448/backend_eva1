@@ -21,9 +21,7 @@
           <p class="mb-1">{{ s.responsable }}</p>
           <a href="{% url 'editarMantencion' s.id %}" class="btn btn-sm btn-warning">Editar</a>
           <button type="button" 
-                  class="btn btn-sm btn-danger" 
-                  data-bs-toggle="modal"
-                  data-bs-target="#modal"
+                  class="btn btn-sm btn-danger delete-mantencion" 
                   data-form-url="{% url 'eliminarMantencion' s.id %}">
             Eliminar
           </button>

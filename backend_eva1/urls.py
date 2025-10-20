@@ -33,5 +33,5 @@ urlpatterns = [
     path('mantenciones/', views.listadoMantenciones, name="mantenciones"),
     path('agregarMantencion/', views.agregarMantencion, name="agregarMantencion"),
     path('editarMantencion/<int:id>/', views.editarMantencion, name="editarMantencion"),
-    path('eliminarMantencion/<int:id>/', views.eliminarMantencion, name="eliminarMantencion"),
+    path('eliminarMantencion/<int:pk>/', views.MantencionDeleteView.as_view(), name="eliminarMantencion"),
 ]

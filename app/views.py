@@ -6,6 +6,7 @@ from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.contrib.auth.forms import AuthenticationForm
 from bootstrap_modal_forms.generic import BSModalCreateView, BSModalDeleteView
 from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 # Create your views here.
 
@@ -104,14 +105,9 @@ def editarMantencion(request, id):
     data = {'form': form, 'id': id}
     return render(request, 'app/agregarMantencion.html', data)
 
-@login_required
-def eliminarMantencion(request, id):
-    mantencion = Mantencion.objects.get(id=id)
-    mantencion.delete()
-    return redirect('mantenciones')
-
-class MantencionDeleteView(BSModalDeleteView):
+# Vista basada en clase para eliminar con modal
+class MantencionDeleteView(LoginRequiredMixin, BSModalDeleteView):
     model = Mantencion
-    template_name = 'app/eliminar_mantencion_modal.html'
+    template_name = 'app/eliminarMantencion.html'
     success_message = 'Mantención eliminada correctamente.'
     success_url = reverse_lazy('mantenciones')

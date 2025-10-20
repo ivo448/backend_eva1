@@ -1,13 +1,15 @@
 <form method="post" action="">
   {% csrf_token %}
   <div class="modal-header">
-    <h5 class="modal-title">Confirmar eliminación</h5>
+    <h5 class="modal-title">Confirmar Eliminación</h5>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
   </div>
+  
   <div class="modal-body">
-    <p>¿Está seguro que desea eliminar la mantención de <strong>{{ mantencion.responsable }}</strong>?</p>
-    <p class="text-muted">Esta acción no se puede deshacer.</p>
+    <p>¿Está seguro que desea eliminar la mantención <strong>{{ object.nombre }}</strong>?</p>
+    <p class="text-muted mb-0">Esta acción no se puede deshacer.</p>
   </div>
+  
   <div class="modal-footer">
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
     <button type="submit" class="btn btn-danger">Eliminar</button>

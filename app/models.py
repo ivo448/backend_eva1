@@ -3,7 +3,7 @@ from django.contrib.auth.models import User  # usuarios de Django
 
 class Equipo(models.Model):
     nombre = models.CharField(max_length=100)
-    descripcion = models.CharField(max_length=250)
+    descripcion = models.CharField(max_length=250, null=True, blank=True)
     cantidad = models.IntegerField()
     imagen = models.ImageField(upload_to='equipos/', null=True, blank=True)
 

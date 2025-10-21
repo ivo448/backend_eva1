@@ -44,7 +44,7 @@ def listadoEquipos(request):
 def agregarEquipo(request):
     form = FormEquipo()
     if request.method == "POST":
-        form = FormEquipo(request.POST)
+        form = FormEquipo(request.POST, request.FILES)
         if form.is_valid():
             form.save()
             return redirect('equipos')

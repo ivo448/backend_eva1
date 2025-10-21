@@ -6,11 +6,12 @@ from django.contrib.auth.models import User
 class FormEquipo(forms.ModelForm):
     class Meta:
         model = Equipo
-        fields = ['nombre', 'descripcion', 'cantidad']
+        fields = ['nombre', 'descripcion', 'cantidad', 'imagen']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control'}),
             'cantidad': forms.NumberInput(attrs={'class': 'form-control'}),
+            'imagen': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
         }
 
 class FormSolicitud(forms.ModelForm):

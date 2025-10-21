@@ -39,3 +39,6 @@ urlpatterns = [
     path('editarMantencion/<int:id>/', views.editarMantencion, name="editarMantencion"),
     path('eliminarMantencion/<int:pk>/', views.MantencionDeleteView.as_view(), name="eliminarMantencion"),
 ]
+ 
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

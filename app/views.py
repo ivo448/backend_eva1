@@ -53,6 +53,13 @@ def agregarEquipo(request):
     }
     return render(request, 'app/agregarEquipo.html', data)
 
+# Vista basada en clase para eliminar con modal
+class EquipoDeleteView(LoginRequiredMixin, BSModalDeleteView):
+    model = Equipo
+    template_name = 'app/eliminarEquipo.html'
+    success_message = 'Equipo eliminado correctamente.'
+    success_url = reverse_lazy('equipos')
+
 # -- CRUD SOLICITUDES --
 @login_required
 def listadoSolicitudes(request):
@@ -74,6 +81,13 @@ def agregarSolicitud(request):
         "form": form
     }
     return render(request, 'app/agregarSolicitud.html', data)
+
+# Vista basada en clase para eliminar con modal
+class SolicitudDeleteView(LoginRequiredMixin, BSModalDeleteView):
+    model = Solicitud
+    template_name = 'app/eliminarSolicitud.html'
+    success_message = 'Solicitud eliminada correctamente.'
+    success_url = reverse_lazy('solicitudes')
 
 # -- CRUD MANTENCIONES --
 @login_required

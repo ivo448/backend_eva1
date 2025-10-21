@@ -1,4 +1,5 @@
 {% extends "app/index.html" %}
+{% load static %}
 {% block title %}Solicitudes - Pañol{% endblock %}
 
 {% block contenido %}
@@ -17,6 +18,11 @@
           <strong>{{ s.nombre }}</strong>
           <p class="mb-1">{{ s.descripcion }}</p>
           <small class="text-muted">Fecha: {{ s.fecha }}</small>
+          <button type="button" 
+                  class="btn btn-sm btn-danger delete-solicitud" 
+                  data-form-url="{% url 'eliminarSolicitud' s.id %}">
+            Eliminar
+          </button>
         </li>
       {% empty %}
         <li class="list-group-item text-center text-muted">No hay solicitudes registradas.</li>
@@ -25,4 +31,27 @@
   </div>
   {% endif %}
 </div>
+
+<!-- Modal -->
+<div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <!-- El contenido del modal se cargará aquí -->
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extrascripts %}
+<script src="{% static 'js/jquery.bootstrap.modal.forms.js' %}"></script>
+<script>
+$(document).ready(function() {
+    $(".delete-solicitud").each(function () {
+        $(this).modalForm({
+            formURL: $(this).data('form-url'),
+            modalID: "#modal"
+        });
+    });
+});
+</script>
 {% endblock %}

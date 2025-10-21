@@ -26,9 +26,11 @@ urlpatterns = [
     # -- CRUD SOLICITUDES --
     path('solicitudes/', views.listadoSolicitudes, name="solicitudes"),
     path('agregarSolicitud/', views.agregarSolicitud, name="agregarSolicitud"),
+    path('eliminarSolicitud/<int:pk>/', views.SolicitudDeleteView.as_view(), name="eliminarSolicitud"),
     # -- CRUD EQUIPOS --
     path('equipos/', views.listadoEquipos, name="equipos"),
     path('agregarEquipo/', views.agregarEquipo, name="agregarEquipo"),
+    path('eliminarEquipo/<int:pk>/', views.EquipoDeleteView.as_view(), name="eliminarEquipo"),
     # -- CRUD MANTENCIONES --
     path('mantenciones/', views.listadoMantenciones, name="mantenciones"),
     path('agregarMantencion/', views.agregarMantencion, name="agregarMantencion"),

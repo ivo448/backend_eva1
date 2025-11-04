@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 import socket
+import sys
 
 load_dotenv()
 
@@ -79,9 +80,10 @@ WSGI_APPLICATION = 'backend_eva1.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+ON_PYTHONANYWHERE = 'pythonanywhere' in sys.platform or 'PYTHONANYWHERE_DOMAIN' in os.environ
 
-if 'pythonanywhere' in socket.gethostname():
-    print(socket.gethostname)
+if ON_PYTHONANYWHERE:
+    print("Entorno PythonAnywhere")
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -95,7 +97,7 @@ if 'pythonanywhere' in socket.gethostname():
         }
     }
 else:
-    print("localhost")
+    print("Entorno localhost")
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -142,7 +144,7 @@ STATIC_URL = 'static/'
 
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
-# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles_collect')
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

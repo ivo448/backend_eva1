@@ -15,30 +15,17 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
-from app import views
-from django.conf import settings
-from django.conf.urls.static import static
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from app.views import EquipoViewSet, SolicitudViewSet, MantencionViewSet
+
+router = DefaultRouter()
+router.register('equipos', EquipoViewSet)
+router.register('solicitudes', SolicitudViewSet)
+router.register('mantenciones', MantencionViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.index, name="index"),
-    path('login/', views.login_view, name="login"),
-    path('logout/', views.logout_view, name="logout"),
-    # -- CRUD SOLICITUDES --
-    path('solicitudes/', views.listadoSolicitudes, name="solicitudes"),
-    path('agregarSolicitud/', views.agregarSolicitud, name="agregarSolicitud"),
-    path('eliminarSolicitud/<int:pk>/', views.SolicitudDeleteView.as_view(), name="eliminarSolicitud"),
-    # -- CRUD EQUIPOS --
-    path('equipos/', views.listadoEquipos, name="equipos"),
-    path('agregarEquipo/', views.agregarEquipo, name="agregarEquipo"),
-    path('eliminarEquipo/<int:pk>/', views.EquipoDeleteView.as_view(), name="eliminarEquipo"),
-    # -- CRUD MANTENCIONES --
-    path('mantenciones/', views.listadoMantenciones, name="mantenciones"),
-    path('agregarMantencion/', views.agregarMantencion, name="agregarMantencion"),
-    path('editarMantencion/<int:id>/', views.editarMantencion, name="editarMantencion"),
-    path('eliminarMantencion/<int:pk>/', views.MantencionDeleteView.as_view(), name="eliminarMantencion"),
+    path('api/', include(router.urls)),
+    path('api-auth/', include('rest_framework.urls')),  # Adds login to browsable API
 ]
- 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

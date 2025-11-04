@@ -7,6 +7,9 @@ from django.contrib.auth.forms import AuthenticationForm
 from bootstrap_modal_forms.generic import BSModalCreateView, BSModalDeleteView
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+from .serializers import EquipoSerializer, SolicitudSerializer, MantencionSerializer
 
 # Create your views here.
 
@@ -125,3 +128,20 @@ class MantencionDeleteView(LoginRequiredMixin, BSModalDeleteView):
     template_name = 'app/eliminarMantencion.html'
     success_message = 'Mantención eliminada correctamente.'
     success_url = reverse_lazy('mantenciones')
+
+# -------------- API VIEWSETS ----------------
+
+class EquipoViewSet(viewsets.ModelViewSet):
+    queryset = Equipo.objects.all()
+    serializer_class = EquipoSerializer
+    permission_classes = [IsAuthenticated]
+
+class SolicitudViewSet(viewsets.ModelViewSet):
+    queryset = Solicitud.objects.all()
+    serializer_class = SolicitudSerializer
+    permission_classes = [IsAuthenticated]
+
+class MantencionViewSet(viewsets.ModelViewSet):
+    queryset = Mantencion.objects.all()
+    serializer_class = MantencionSerializer
+    permission_classes = [IsAuthenticated]

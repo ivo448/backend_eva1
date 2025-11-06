@@ -28,6 +28,9 @@
             <div>
               <strong>{{ equipo.nombre }}</strong><br>
               <small class="text-muted">{{ equipo.descripcion }}</small>
+              {% if equipo.creado_por %}
+                <div><small class="text-muted">Creado por: {{ equipo.creado_por.username }}</small></div>
+              {% endif %}
             </div>
             <span class="badge bg-info text-dark">
               Cantidad: {{ equipo.cantidad }}

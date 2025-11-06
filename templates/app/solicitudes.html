@@ -18,6 +18,9 @@
           <strong>{{ s.nombre }}</strong>
           <p class="mb-1">{{ s.descripcion }}</p>
           <small class="text-muted">Fecha: {{ s.fecha }}</small>
+          {% if s.usuario %}
+            <div><small class="text-muted">Solicitado por: {{ s.usuario.username }}</small></div>
+          {% endif %}
           <button type="button" 
                   class="btn btn-sm btn-danger delete-solicitud" 
                   data-form-url="{% url 'eliminarSolicitud' s.id %}">

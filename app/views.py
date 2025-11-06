@@ -46,7 +46,11 @@ def agregarEquipo(request):
     if request.method == "POST":
         form = FormEquipo(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
+            equipo = form.save(commit=False)
+            # asignar creador automáticamente si hay usuario autenticado
+            if request.user.is_authenticated:
+                equipo.creado_por = request.user
+            equipo.save()
             return redirect('equipos')
     data = {
         "form": form

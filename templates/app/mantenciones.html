@@ -18,7 +18,12 @@
           <strong>{{ s.nombre }}</strong>
           <p class="mb-1">{{ s.fecha_inicio }} - {{ s.fecha_fin }}</p>
           <p class="mb-1">{{ s.descripcion }}</p>
-          <p class="mb-1">{{ s.responsable }}</p>
+          {% if s.equipo %}
+            <p class="mb-1">Equipo: {{ s.equipo.nombre }}</p>
+          {% endif %}
+          {% if s.responsable %}
+            <p class="mb-1">Responsable: {{ s.responsable.username }}</p>
+          {% endif %}
           <a href="{% url 'editarMantencion' s.id %}" class="btn btn-sm btn-warning">Editar</a>
           <button type="button" 
                   class="btn btn-sm btn-danger delete-mantencion" 

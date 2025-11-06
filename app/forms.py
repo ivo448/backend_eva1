@@ -17,21 +17,23 @@ class FormEquipo(forms.ModelForm):
 class FormSolicitud(forms.ModelForm):
     class Meta:
         model = Solicitud
-        fields = ['nombre', 'fecha', 'descripcion']
+        fields = ['nombre', 'fecha', 'descripcion', 'usuario']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'fecha': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control'}),
+            'usuario': forms.Select(attrs={'class': 'form-select'}),
         }
 
 class FormMantencion(forms.ModelForm):
     class Meta:
         model = Mantencion
-        fields = ['nombre', 'fecha_inicio', 'fecha_fin', 'descripcion', 'responsable']
+        fields = ['nombre', 'equipo', 'fecha_inicio', 'fecha_fin', 'descripcion', 'responsable']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'equipo': forms.Select(attrs={'class': 'form-select'}),
             'fecha_inicio': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'fecha_fin': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control'}),
-            'responsable': forms.TextInput(attrs={'class': 'form-control'}),
+            'responsable': forms.Select(attrs={'class': 'form-select'}),
         }

@@ -1,0 +1,22 @@
+{% extends "app/index.html" %}
+{% block title %}Detalle de Perfil{% endblock %}
+{% block contenido %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Perfil de: {{ perfil.usuario.username }}</h5>
+            <a href="{% url 'perfiles' %}" class="btn btn-sm btn-outline-secondary">Volver a la lista</a>
+        </div>
+        <div class="card-body">
+            <p><strong>Nombre:</strong> {{ perfil.usuario.first_name }} {{ perfil.usuario.last_name }}</p>
+            <p><strong>Email:</strong> {{ perfil.usuario.email }}</p>
+            <p><strong>Rol:</strong> {{ perfil.get_rol_display }}</p>
+            <p><strong>RUT:</strong> {{ perfil.rut|default:"N/A" }}</p>
+            <p><strong>Teléfono:</strong> {{ perfil.telefono|default:"N/A" }}</p>
+            <p><strong>Dirección:</strong> {{ perfil.direccion|default:"N/A" }}</p>
+            <hr>
+            <a href="{% url 'editarPerfil' perfil.id %}" class="btn btn-warning">Editar</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

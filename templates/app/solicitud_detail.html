@@ -1,0 +1,28 @@
+{% extends "app/index.html" %}
+{% block title %}Detalle de Solicitud - Pañol{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Detalle: {{ solicitud.nombre }}</h5>
+            <a href="{% url 'solicitudes' %}" class="btn btn-sm btn-outline-secondary">Volver a la lista</a>
+        </div>
+        <div class="card-body">
+            <p><strong>Usuario:</strong> {{ solicitud.usuario.username|default:"N/A" }}</p>
+            <p><strong>Fecha Solicitud:</strong> {{ solicitud.fecha }}</p>
+            <p><strong>Estado:</strong> <span class="badge 
+                {% if solicitud.estado == 'APROBADO' %} bg-success 
+                {% elif solicitud.estado == 'RECHAZADO' %} bg-danger
+                {% else %} bg-warning text-dark {% endif %}
+              ">{{ solicitud.get_estado_display }}</span>
+            </p>
+            <p><strong>Descripción:</strong></p>
+            <p>{{ solicitud.descripcion }}</p>
+            
+            <hr>
+            <a href="{% url 'editarSolicitud' solicitud.id %}" class="btn btn-warning">Editar</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

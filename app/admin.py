@@ -27,9 +27,9 @@ class PrestamoAdmin(admin.ModelAdmin):
     list_filter = ('fecha_prestamo', 'fecha_devolucion_estimada', 'fecha_devolucion_real')
 
 class ReservaTallerAdmin(admin.ModelAdmin):
-    list_display = ('usuario', 'proposito', 'fecha_reserva', 'hora_inicio', 'hora_fin')
+    list_display = ('usuario', 'proposito', 'inicio_reserva', 'fin_reserva')
     search_fields = ('usuario__username', 'proposito')
-    list_filter = ('fecha_reserva',)
+    list_filter = ('inicio_reserva', 'fin_reserva')
 
 admin.site.register(Equipo, EquipoAdmin)
 admin.site.register(Solicitud, SolicitudAdmin)

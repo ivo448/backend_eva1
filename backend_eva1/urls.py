@@ -34,10 +34,11 @@ urlpatterns = [
     path('mantenciones/detalle/<int:pk>/', views.MantencionDetailView.as_view(), name="detalleMantencion"),
     path('mantenciones/eliminar/<int:pk>/', views.MantencionDeleteView.as_view(), name="eliminarMantencion"),
 
-    # -- CRUD PERFILES --
+    # -- CRUD PERFILES (USUARIOS) --
     path('perfiles/', views.listadoPerfiles, name="perfiles"),
     path('perfiles/editar/<int:id>/', views.editarPerfil, name="editarPerfil"),
     path('perfiles/detalle/<int:pk>/', views.PerfilDetailView.as_view(), name="detallePerfil"),
+    # (Generalmente no se elimina un perfil/usuario directamente, pero se puede añadir)
 
     # -- CRUD PRESTAMOS --
     path('prestamos/', views.listadoPrestamos, name="prestamos"),

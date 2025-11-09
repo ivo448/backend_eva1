@@ -1,16 +1,39 @@
 from django.contrib import admin
-from app.models import Equipo, Solicitud, Mantencion
+from .models import Equipo, Solicitud, Mantencion, Perfil, Prestamo, ReservaTaller
 
 class EquipoAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'descripcion', '']
+    list_display = ('id', 'nombre', 'cantidad', 'creado_por')
+    search_fields = ('nombre', 'descripcion', 'creado_por__username')
+    list_filter = ('cantidad', 'creado_por')
 
 class SolicitudAdmin(admin.ModelAdmin):
-    list_display = ['', '', '']
+    list_display = ('id', 'nombre', 'usuario', 'fecha', 'estado')
+    search_fields = ('nombre', 'descripcion', 'usuario__username')
+    list_filter = ('fecha', 'usuario', 'estado')
 
 class MantencionAdmin(admin.ModelAdmin):
-    list_display = ['', '', '']
+    list_display = ('id', 'nombre', 'equipo', 'fecha_inicio', 'fecha_fin', 'responsable')
+    search_fields = ('nombre', 'descripcion', 'equipo__nombre', 'responsable__username')
+    list_filter = ('equipo', 'responsable')
 
-# Register your models here.
-admin.site.register(Equipo)
-admin.site.register(Solicitud)
-admin.site.register(Mantencion)
+class PerfilAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'rol', 'rut', 'telefono')
+    search_fields = ('usuario__username', 'rut', 'rol')
+    list_filter = ('rol',)
+
+class PrestamoAdmin(admin.ModelAdmin):
+    list_display = ('equipo', 'solicitud', 'cantidad_prestada', 'fecha_prestamo', 'fecha_devolucion_estimada', 'fecha_devolucion_real')
+    search_fields = ('equipo__nombre', 'solicitud__usuario__username')
+    list_filter = ('fecha_prestamo', 'fecha_devolucion_estimada', 'fecha_devolucion_real')
+
+class ReservaTallerAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'proposito', 'fecha_reserva', 'hora_inicio', 'hora_fin')
+    search_fields = ('usuario__username', 'proposito')
+    list_filter = ('fecha_reserva',)
+
+admin.site.register(Equipo, EquipoAdmin)
+admin.site.register(Solicitud, SolicitudAdmin)
+admin.site.register(Mantencion, MantencionAdmin)
+admin.site.register(Perfil, PerfilAdmin)
+admin.site.register(Prestamo, PrestamoAdmin)
+admin.site.register(ReservaTaller, ReservaTallerAdmin)

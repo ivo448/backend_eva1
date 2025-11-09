@@ -1,0 +1,53 @@
+{% extends "app/index.html" %}
+{% load static %}
+{% block title %}Reservas de Taller{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+  <a href="{% url 'agregarReservaTaller' %}" class="btn btn-primary mb-3">Agregar Reserva</a>
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">Lista de Reservas de Taller</h5>
+    </div>
+    <ul class="list-group list-group-flush">
+      {% for r in reservas %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ r.proposito|truncatewords:10 }}</strong>
+            <p class="mb-1 text-muted small">
+                {{ r.inicio_reserva|date:"d/m/Y H:i" }} hasta {{ r.fin_reserva|date:"d/m/Y H:i" }}
+            </p>
+            <p class="mb-1"><small>Usuario: {{ r.usuario.username }}</small></p>
+          </div>
+          <div>
+            <a href="{% url 'detalleReservaTaller' r.pk %}" class="btn btn-sm btn-outline-info">Ver</a>
+            <a href="{% url 'editarReservaTaller' r.id %}" class="btn btn-sm btn-warning">Editar</a>
+            <button type="button" 
+                    class="btn btn-sm btn-danger delete-reserva" 
+                    data-form-url="{% url 'eliminarReservaTaller' r.id %}">
+              Eliminar
+            </button>
+          </div>
+        </li>
+      {% empty %}
+        <li class="list-group-item text-center text-muted">No hay reservas registradas.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
+
+{% block extrascripts %}
+<script>
+$(document).ready(function() {
+    $(".delete-reserva").each(function () {
+        $(this).modalForm({
+            formURL: $(this).data('form-url'),
+            modalID: "#modal",
+            isDeleteForm: true
+        });
+    });
+});
+</script>
+{% endblock %}

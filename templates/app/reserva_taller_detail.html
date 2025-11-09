@@ -1,0 +1,38 @@
+{% extends "app/index.html" %}
+{% block title %}Detalle de Reserva{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Detalle de Reserva</h5>
+            <a href="{% url 'reservas_taller' %}" class="btn btn-sm btn-outline-secondary">Volver a la lista</a>
+        </div>
+        <div class="card-body">
+            <p><strong>Usuario:</strong> {{ reserva.usuario.username }}</p>
+            <p><strong>Proposito:</strong> {{ reserva.proposito }}</p>
+            <p><strong>Inicio:</strong> {{ reserva.inicio_reserva }}</p>
+            <p><strong>Fin:</strong> {{ reserva.fin_reserva }}</p>
+            <p><strong>Cantidad Alumnos:</strong> {{ reserva.cantidad_alumnos }}</p>
+
+            <hr>
+            <h6>Equipos Reservados:</h6>
+            {% if reserva.reservatallerequipo_set.all %}
+                <ul class="list-group">
+                {% for item in reserva.reservatallerequipo_set.all %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ item.equipo.nombre }}
+                        <span class="badge bg-primary rounded-pill">{{ item.cantidad }}</span>
+                    </li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">No se reservaron equipos específicos para este taller.</p>
+            {% endif %}
+            
+            <hr>
+            <a href="{% url 'editarReservaTaller' reserva.id %}" class="btn btn-warning">Editar</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

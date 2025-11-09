@@ -9,9 +9,6 @@ from django.utils import timezone
 from django.forms import inlineformset_factory, BaseInlineFormSet
 from django.db.models import Sum
 
-# --- Forms existentes (sin cambios) ---
-# FormEquipo, FormSolicitud, FormMantencion, FormPerfil, FormPrestamo
-# (Asegúrate de que los formularios anteriores estén aquí)
 class FormEquipo(forms.ModelForm):
     class Meta:
         model = Equipo
@@ -22,11 +19,15 @@ class FormEquipo(forms.ModelForm):
             'cantidad': forms.NumberInput(attrs={'class': 'form-control'}),
             'imagen': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
         }
+
+    # 1. Validacion de Formulario: Cantidad positiva
     def clean_cantidad(self):
         cantidad = self.cleaned_data.get('cantidad')
         if cantidad is not None and cantidad < 0:
             raise ValidationError("La cantidad no puede ser negativa.")
         return cantidad
+
+    # 2. Validacion de Formulario: Nombre no puede ser "Test"
     def clean_nombre(self):
         nombre = self.cleaned_data.get('nombre')
         if nombre and 'test' in nombre.lower():
@@ -44,11 +45,15 @@ class FormSolicitud(forms.ModelForm):
             'usuario': forms.Select(attrs={'class': 'form-select'}),
             'estado': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    # 1. Validacion de Formulario: Fecha no puede ser en el pasado
     def clean_fecha(self):
         fecha = self.cleaned_data.get('fecha')
         if fecha and fecha < timezone.now().date():
             raise ValidationError("La fecha de la solicitud no puede ser en el pasado.")
         return fecha
+
+    # 2. Validacion de Formulario: Descripcion minima
     def clean_descripcion(self):
         descripcion = self.cleaned_data.get('descripcion')
         if descripcion and len(descripcion) < 10:
@@ -67,18 +72,27 @@ class FormMantencion(forms.ModelForm):
             'descripcion': forms.Textarea(attrs={'class': 'form-control'}),
             'responsable': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    # 1. Validacion de Formulario: Fechas congruentes
     def clean(self):
         cleaned_data = super().clean()
         fecha_inicio = cleaned_data.get('fecha_inicio')
         fecha_fin = cleaned_data.get('fecha_fin')
+
         if fecha_inicio and fecha_fin and fecha_fin < fecha_inicio:
+            # Lanza error en el campo 'fecha_fin'
             self.add_error('fecha_fin', "La fecha de finalización no puede ser anterior a la fecha de inicio.")
+        
         return cleaned_data
+
+    # 2. Validacion de Formulario: Responsable es requerido
     def clean_responsable(self):
         responsable = self.cleaned_data.get('responsable')
         if not responsable:
             raise ValidationError("Se debe asignar un responsable para la mantención.")
         return responsable
+
+# --- FORMS PARA NUEVOS MODELOS ---
 
 class FormPerfil(forms.ModelForm):
     class Meta:
@@ -90,6 +104,8 @@ class FormPerfil(forms.ModelForm):
             'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+569...'}),
             'direccion': forms.TextInput(attrs={'class': 'form-control'}),
         }
+    
+    # Validacion: Formato de RUT (simple)
     def clean_rut(self):
         rut = self.cleaned_data.get('rut')
         if rut and (len(rut) < 8 or '-' not in rut):
@@ -106,15 +122,17 @@ class FormPrestamo(forms.ModelForm):
             'fecha_devolucion_estimada': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'cantidad_prestada': forms.NumberInput(attrs={'class': 'form-control'}),
         }
+    
+    # Validacion: No prestar más de lo disponible
     def clean(self):
         cleaned_data = super().clean()
         equipo = cleaned_data.get('equipo')
         cantidad = cleaned_data.get('cantidad_prestada')
+
         if equipo and cantidad:
             if cantidad > equipo.cantidad:
                 self.add_error('cantidad_prestada', f"No se pueden prestar {cantidad}. Stock disponible: {equipo.cantidad}")
         return cleaned_data
-
 
 # --- FORMULARIO DE RESERVA DE TALLER (ACTUALIZADO) ---
 

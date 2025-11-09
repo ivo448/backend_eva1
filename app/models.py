@@ -55,6 +55,8 @@ class Mantencion(models.Model):
         if self.fecha_fin < self.fecha_inicio:
             raise ValidationError('La fecha de finalización no puede ser anterior a la fecha de inicio.')
 
+# --- NUEVAS ENTIDADES (4 y 5) ---
+
 class Perfil(models.Model):
     ROL_OPCIONES = [
         ('ADMIN', 'Administrador'),
@@ -93,25 +95,45 @@ class Prestamo(models.Model):
         if self.fecha_devolucion_estimada <= timezone.now():
             raise ValidationError("La fecha de devolución estimada debe ser en el futuro.")
 
-# --- Planificacion Uso/Reserva de Taller ---
+# --- NUEVA FUNCIONALIDAD (Entidad 6) ---
 
 class ReservaTaller(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reservas_taller')
     proposito = models.CharField(max_length=200)
-    fecha_reserva = models.DateField()
-    hora_inicio = models.TimeField()
-    hora_fin = models.TimeField()
+    # Cambiamos a DateTimeField para validaciones de tiempo precisas
+    inicio_reserva = models.DateTimeField()
+    fin_reserva = models.DateTimeField()
     cantidad_alumnos = models.IntegerField(default=1, validators=[MinValueValidator(1)])
+    
+    # Relación ManyToMany con Equipos, usando un modelo 'through'
+    equipos = models.ManyToManyField(
+        Equipo,
+        through='ReservaTallerEquipo',
+        related_name='reservas_taller'
+    )
 
     def __str__(self):
-        return f"Reserva de {self.usuario.username} para {self.fecha_reserva} ({self.hora_inicio} - {self.hora_fin})"
+        return f"Reserva de {self.usuario.username} para {self.inicio_reserva.strftime('%Y-%m-%d %H:%M')}"
 
-    # Validacion a nivel de modelo
     def clean(self):
         # 1. Hora de fin debe ser posterior a hora de inicio
-        if self.hora_fin <= self.hora_inicio:
+        if self.fin_reserva <= self.inicio_reserva:
             raise ValidationError("La hora de finalización debe ser posterior a la hora de inicio.")
         
         # 2. No se pueden reservar fechas pasadas
-        if self.fecha_reserva < timezone.now().date():
-             raise ValidationError("No se puede reservar en una fecha pasada.")
+        if self.inicio_reserva < timezone.now():
+             raise ValidationError("No se puede reservar en una fecha/hora pasada.")
+        
+# --- NUEVO MODELO 'THROUGH' ---
+# Este modelo conecta la Reserva con el Equipo y almacena la CANTIDAD
+class ReservaTallerEquipo(models.Model):
+    reserva = models.ForeignKey(ReservaTaller, on_delete=models.CASCADE)
+    equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE)
+    cantidad = models.IntegerField(validators=[MinValueValidator(1)])
+
+    class Meta:
+        # Asegura que no se pueda añadir el mismo equipo dos veces en la misma reserva
+        unique_together = ('reserva', 'equipo')
+
+    def __str__(self):
+        return f"{self.cantidad} x {self.equipo.nombre} para {self.reserva.proposito}"

@@ -1,9 +1,17 @@
 from django import forms
-from .models import Equipo, Solicitud, Mantencion, Perfil, Prestamo, ReservaTaller
+from .models import (
+    Equipo, Solicitud, Mantencion, Perfil, Prestamo, 
+    ReservaTaller, ReservaTallerEquipo
+)
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.forms import inlineformset_factory, BaseInlineFormSet
+from django.db.models import Sum
 
+# --- Forms existentes (sin cambios) ---
+# FormEquipo, FormSolicitud, FormMantencion, FormPerfil, FormPrestamo
+# (Asegúrate de que los formularios anteriores estén aquí)
 class FormEquipo(forms.ModelForm):
     class Meta:
         model = Equipo
@@ -14,13 +22,16 @@ class FormEquipo(forms.ModelForm):
             'cantidad': forms.NumberInput(attrs={'class': 'form-control'}),
             'imagen': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
         }
-
-    # 1. Validacion Cantidad positiva
     def clean_cantidad(self):
         cantidad = self.cleaned_data.get('cantidad')
         if cantidad is not None and cantidad < 0:
             raise ValidationError("La cantidad no puede ser negativa.")
         return cantidad
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre')
+        if nombre and 'test' in nombre.lower():
+            raise ValidationError("El nombre no puede contener la palabra 'test'.")
+        return nombre
 
 class FormSolicitud(forms.ModelForm):
     class Meta:
@@ -33,15 +44,11 @@ class FormSolicitud(forms.ModelForm):
             'usuario': forms.Select(attrs={'class': 'form-select'}),
             'estado': forms.Select(attrs={'class': 'form-select'}),
         }
-
-    # 1. Validacion Fecha no puede ser en el pasado
     def clean_fecha(self):
         fecha = self.cleaned_data.get('fecha')
         if fecha and fecha < timezone.now().date():
             raise ValidationError("La fecha de la solicitud no puede ser en el pasado.")
         return fecha
-
-    # 2. Validacion Descripcion minima
     def clean_descripcion(self):
         descripcion = self.cleaned_data.get('descripcion')
         if descripcion and len(descripcion) < 10:
@@ -60,27 +67,18 @@ class FormMantencion(forms.ModelForm):
             'descripcion': forms.Textarea(attrs={'class': 'form-control'}),
             'responsable': forms.Select(attrs={'class': 'form-select'}),
         }
-
-    # 1. Validacion Fechas congruentes
     def clean(self):
         cleaned_data = super().clean()
         fecha_inicio = cleaned_data.get('fecha_inicio')
         fecha_fin = cleaned_data.get('fecha_fin')
-
         if fecha_inicio and fecha_fin and fecha_fin < fecha_inicio:
-            # Lanza error en el campo 'fecha_fin'
             self.add_error('fecha_fin', "La fecha de finalización no puede ser anterior a la fecha de inicio.")
-        
         return cleaned_data
-
-    # 2. Validacion Responsable es requerido
     def clean_responsable(self):
         responsable = self.cleaned_data.get('responsable')
         if not responsable:
             raise ValidationError("Se debe asignar un responsable para la mantención.")
         return responsable
-
-# --- FORMS PARA NUEVOS MODELOS ---
 
 class FormPerfil(forms.ModelForm):
     class Meta:
@@ -92,8 +90,6 @@ class FormPerfil(forms.ModelForm):
             'telefono': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+569...'}),
             'direccion': forms.TextInput(attrs={'class': 'form-control'}),
         }
-    
-    # Validacion Formato de RUT
     def clean_rut(self):
         rut = self.cleaned_data.get('rut')
         if rut and (len(rut) < 8 or '-' not in rut):
@@ -110,55 +106,140 @@ class FormPrestamo(forms.ModelForm):
             'fecha_devolucion_estimada': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'cantidad_prestada': forms.NumberInput(attrs={'class': 'form-control'}),
         }
-    
-    # Validacion No prestar más de lo disponible
     def clean(self):
         cleaned_data = super().clean()
         equipo = cleaned_data.get('equipo')
         cantidad = cleaned_data.get('cantidad_prestada')
-
         if equipo and cantidad:
             if cantidad > equipo.cantidad:
                 self.add_error('cantidad_prestada', f"No se pueden prestar {cantidad}. Stock disponible: {equipo.cantidad}")
         return cleaned_data
 
+
+# --- FORMULARIO DE RESERVA DE TALLER (ACTUALIZADO) ---
+
 class FormReservaTaller(forms.ModelForm):
     class Meta:
         model = ReservaTaller
-        fields = ['usuario', 'proposito', 'fecha_reserva', 'hora_inicio', 'hora_fin', 'cantidad_alumnos']
+        fields = ['usuario', 'proposito', 'inicio_reserva', 'fin_reserva', 'cantidad_alumnos']
         widgets = {
             'usuario': forms.Select(attrs={'class': 'form-select'}),
             'proposito': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'fecha_reserva': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'hora_inicio': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
-            'hora_fin': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            # Usamos datetime-local para que el usuario elija fecha y hora
+            'inicio_reserva': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'fin_reserva': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'cantidad_alumnos': forms.NumberInput(attrs={'class': 'form-control'}),
         }
 
-    # Validacion Conflicto de horarios
     def clean(self):
         cleaned_data = super().clean()
-        fecha = cleaned_data.get('fecha_reserva')
-        inicio = cleaned_data.get('hora_inicio')
-        fin = cleaned_data.get('hora_fin')
+        inicio = cleaned_data.get('inicio_reserva')
+        fin = cleaned_data.get('fin_reserva')
 
-        if not (fecha and inicio and fin):
-            return cleaned_data # No se puede validar si faltan datos
-
-        # 1. Validar que hora_fin > hora_inicio
-        if fin <= inicio:
-            self.add_error('hora_fin', "La hora de finalización debe ser posterior a la de inicio.")
-
-        # 2. Validar que no se topen las reservas
-        # Excluye la reserva actual si se está editando (self.instance.pk)
-        reservas_existentes = ReservaTaller.objects.filter(fecha_reserva=fecha).exclude(pk=self.instance.pk)
-        
-        conflicto = reservas_existentes.filter(
-            hora_inicio__lt=fin,
-            hora_fin__gt=inicio
-        ).exists()
-
-        if conflicto:
-            raise ValidationError("Existe un tope de horario con otra reserva. Por favor, elija otro bloque.")
-
+        if inicio and fin:
+            if fin <= inicio:
+                self.add_error('fin_reserva', "La hora de finalización debe ser posterior a la de inicio.")
+            if inicio < timezone.now():
+                self.add_error('inicio_reserva', "No se puede reservar en una fecha/hora pasada.")
         return cleaned_data
+
+
+class FormReservaTallerEquipo(forms.ModelForm):
+    """Formulario para la línea de equipo en la reserva."""
+    class Meta:
+        model = ReservaTallerEquipo
+        fields = ['equipo', 'cantidad']
+        widgets = {
+            'equipo': forms.Select(attrs={'class': 'form-select form-select-sm'}),
+            'cantidad': forms.NumberInput(attrs={'class': 'form-control form-control-sm', 'min': '1'}),
+        }
+
+
+class BaseReservaTallerEquipoFormSet(BaseInlineFormSet):
+    """FormSet Base que contiene la lógica de validación de disponibilidad."""
+
+    def clean(self):
+        super().clean()
+        
+        if any(self.errors):
+            # No procesar si hay errores de formulario individuales
+            return
+
+        # 1. Obtener la data del formulario "padre" (ReservaTaller)
+        # self.instance es la instancia de ReservaTaller
+        if not self.instance.inicio_reserva or not self.instance.fin_reserva:
+             raise ValidationError("Debes proveer una fecha/hora de inicio y fin para la reserva.")
+        
+        inicio = self.instance.inicio_reserva
+        fin = self.instance.fin_reserva
+
+        equipos_solicitados = {}
+        
+        # 2. Validar duplicados y recolectar cantidades
+        for form in self.forms:
+            if self.can_delete and self._should_delete_form(form):
+                continue
+            
+            equipo = form.cleaned_data.get('equipo')
+            cantidad = form.cleaned_data.get('cantidad')
+
+            if not equipo or not cantidad:
+                continue
+            
+            # Validar que no se pida el mismo equipo varias veces
+            if equipo in equipos_solicitados:
+                form.add_error('equipo', 'Este equipo ya fue seleccionado en esta reserva.')
+                raise ValidationError("No puedes reservar el mismo equipo dos veces.")
+            
+            equipos_solicitados[equipo] = cantidad
+
+        # 3. Validar disponibilidad de stock para cada equipo solicitado
+        for equipo, cantidad_solicitada in equipos_solicitados.items():
+            stock_total = equipo.cantidad
+            
+            # --- CALCULAR EQUIPOS OCUPADOS EN ESE HORARIO ---
+            
+            # A. Ocupados por otras reservas de taller
+            reservado_taller = ReservaTallerEquipo.objects.filter(
+                equipo=equipo,
+                reserva__fin_reserva__gt=inicio,  # Termina después de que yo empiezo
+                reserva__inicio_reserva__lt=fin # Empieza antes de que yo termine
+            ).exclude(reserva=self.instance).aggregate(total=Sum('cantidad'))['total'] or 0
+            
+            # B. Ocupados por préstamos activos
+            prestado = Prestamo.objects.filter(
+                equipo=equipo,
+                fecha_devolucion_real__isnull=True, # Aún no devuelto
+                fecha_devolucion_estimada__gt=inicio, # Se devuelve después de que yo empiezo
+                fecha_prestamo__lt=fin # Se prestó antes de que yo termine
+            ).aggregate(total=Sum('cantidad_prestada'))['total'] or 0
+
+            # C. Ocupados por mantenciones (Asumimos que 1 mantención = 1 unidad)
+            en_mantencion = Mantencion.objects.filter(
+                equipo=equipo,
+                fecha_fin__gte=inicio.date(), # Termina después de que yo empiezo
+                fecha_inicio__lte=fin.date() # Empieza antes de que yo termine
+            ).count()
+
+            # --- CÁLCULO FINAL ---
+            cantidad_ocupada = reservado_taller + prestado + en_mantencion
+            disponible = stock_total - cantidad_ocupada
+            
+            if cantidad_solicitada > disponible:
+                # Error si se pide más de lo disponible
+                error_msg = f"Disponibilidad excedida. Solo quedan {disponible} unidades de '{equipo.nombre}' en ese horario (Ocupadas: {cantidad_ocupada})."
+                # Añade el error al formulario específico
+                form_con_error = next(f for f in self.forms if f.cleaned_data.get('equipo') == equipo)
+                form_con_error.add_error('cantidad', error_msg)
+                # Lanza error general en el formset
+                raise ValidationError("No hay suficiente stock para uno o más equipos en el horario seleccionado.")
+
+# 4. Crear el Factory del FormSet
+ReservaTallerEquipoFormSet = inlineformset_factory(
+    ReservaTaller,                  # Modelo Padre
+    ReservaTallerEquipo,            # Modelo Hijo (Through)
+    form=FormReservaTallerEquipo,   # Formulario para cada línea
+    formset=BaseReservaTallerEquipoFormSet, # Clase con la lógica de validación
+    extra=1,                        # Empezar con 1 formulario de equipo vacío
+    can_delete=True                 # Permitir eliminar equipos de la reserva
+)

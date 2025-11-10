@@ -1,0 +1,54 @@
+{% extends "app/index.html" %}
+{% load static %}
+{% block title %}Préstamos - Pañol{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+  <a href="{% url 'agregarPrestamo' %}" class="btn btn-primary mb-3">Registrar Préstamo</a>
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">Historial de Préstamos</h5>
+    </div>
+    <ul class="list-group list-group-flush">
+      {% for p in prestamos %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ p.equipo.nombre }}</strong> (x{{ p.cantidad_prestada }})
+            
+            <p class="mb-1 text-muted small">
+                Estudiante: {{ p.estudiante.username }}
+            </p>
+            <p class="mb-1 text-muted small">
+                Registrado por: {{ p.registrado_por.username|default:"N/A" }}
+            </p>
+            
+            <p class="mb-1">
+                <small>Devolución Estimada: {{ p.fecha_devolucion_estimada|date:"d/m/Y H:i" }}</small>
+            </p>
+            {% if p.fecha_devolucion_real %}
+                <span class="badge bg-success">Devuelto</span>
+            {% else %}
+                <span class="badge bg-warning text-dark">Pendiente</span>
+            {% endif %}
+          </div>
+          <div>
+            <a href="{% url 'detallePrestamo' p.pk %}" class="btn btn-sm btn-outline-info">Ver</a>
+            <a href="{% url 'editarPrestamo' p.id %}" class="btn btn-sm btn-warning">Editar</a>
+            <button type="button" 
+                    class="btn btn-sm btn-danger delete-prestamo" 
+                    data-form-url="{% url 'eliminarPrestamo' p.id %}">
+              Eliminar
+            </button>
+          </div>
+        </li>
+      {% empty %}
+        <li class="list-group-item text-center text-muted">No hay préstamos registrados.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
+
+{% block extrascripts %}
+{% endblock %}

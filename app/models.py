@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.core.validators import MinValueValidator
 
-# --- MODELOS EXISTENTES (CON VALIDACIONES) ---
+# --- MODELOS ---
 
 class Equipo(models.Model):
     nombre = models.CharField(max_length=100)
@@ -28,7 +28,6 @@ class Solicitud(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='solicitudes', null=True, blank=True)
     fecha = models.DateField()
     descripcion = models.CharField(max_length=500)
-    # Campo agregado para cumplir requisito de 5+ campos
     estado = models.CharField(max_length=10, choices=ESTADO_OPCIONES, default='PENDIENTE')
 
     def __str__(self):
@@ -55,8 +54,6 @@ class Mantencion(models.Model):
         if self.fecha_fin < self.fecha_inicio:
             raise ValidationError('La fecha de finalización no puede ser anterior a la fecha de inicio.')
 
-# --- NUEVAS ENTIDADES (4 y 5) ---
-
 class Perfil(models.Model):
     ROL_OPCIONES = [
         ('ADMIN', 'Administrador'),
@@ -75,7 +72,23 @@ class Perfil(models.Model):
         return f"Perfil de {self.usuario.username} ({self.get_rol_display()})"
 
 class Prestamo(models.Model):
-    solicitud = models.ForeignKey(Solicitud, on_delete=models.CASCADE, related_name='prestamos')
+    estudiante = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='prestamos_recibidos',
+        # Filtra el dropdown para mostrar solo usuarios con el rol de Estudiante
+        limit_choices_to={'perfil__rol': 'ESTUDIANTE'}
+    )
+    
+    registrado_por = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='prestamos_registrados',
+        limit_choices_to={'perfil__rol__in': ['PANOLERO', 'ADMIN']}
+    )
+    
     equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE, related_name='prestamos')
     fecha_prestamo = models.DateTimeField(auto_now_add=True)
     fecha_devolucion_estimada = models.DateTimeField()
@@ -83,24 +96,18 @@ class Prestamo(models.Model):
     cantidad_prestada = models.IntegerField(validators=[MinValueValidator(1)])
 
     def __str__(self):
-        return f"Préstamo de {self.equipo.nombre} a {self.solicitud.usuario.username}"
+        return f"Préstamo de {self.equipo.nombre} a {self.estudiante.username}"
 
-    # Validacion a nivel de modelo
     def clean(self):
-        # 1. No se puede prestar más de lo que hay en stock
         if self.cantidad_prestada > self.equipo.cantidad:
             raise ValidationError(f"No se pueden prestar {self.cantidad_prestada}. Stock disponible: {self.equipo.cantidad}")
         
-        # 2. La fecha de devolución debe ser posterior a la de préstamo
         if self.fecha_devolucion_estimada <= timezone.now():
             raise ValidationError("La fecha de devolución estimada debe ser en el futuro.")
-
-# --- NUEVA FUNCIONALIDAD (Entidad 6) ---
 
 class ReservaTaller(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reservas_taller')
     proposito = models.CharField(max_length=200)
-    # Cambiamos a DateTimeField para validaciones de tiempo precisas
     inicio_reserva = models.DateTimeField()
     fin_reserva = models.DateTimeField()
     cantidad_alumnos = models.IntegerField(default=1, validators=[MinValueValidator(1)])
@@ -124,7 +131,6 @@ class ReservaTaller(models.Model):
         if self.inicio_reserva < timezone.now():
              raise ValidationError("No se puede reservar en una fecha/hora pasada.")
         
-# --- NUEVO MODELO 'THROUGH' ---
 # Este modelo conecta la Reserva con el Equipo y almacena la CANTIDAD
 class ReservaTallerEquipo(models.Model):
     reserva = models.ForeignKey(ReservaTaller, on_delete=models.CASCADE)

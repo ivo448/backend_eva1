@@ -92,8 +92,6 @@ class FormMantencion(forms.ModelForm):
             raise ValidationError("Se debe asignar un responsable para la mantención.")
         return responsable
 
-# --- FORMS PARA NUEVOS MODELOS ---
-
 class FormPerfil(forms.ModelForm):
     class Meta:
         model = Perfil
@@ -105,7 +103,7 @@ class FormPerfil(forms.ModelForm):
             'direccion': forms.TextInput(attrs={'class': 'form-control'}),
         }
     
-    # Validacion: Formato de RUT (simple)
+    # Validacion: Formato de RUT
     def clean_rut(self):
         rut = self.cleaned_data.get('rut')
         if rut and (len(rut) < 8 or '-' not in rut):
@@ -115,26 +113,31 @@ class FormPerfil(forms.ModelForm):
 class FormPrestamo(forms.ModelForm):
     class Meta:
         model = Prestamo
-        fields = ['solicitud', 'equipo', 'fecha_devolucion_estimada', 'cantidad_prestada']
+        fields = ['estudiante', 'equipo', 'fecha_devolucion_estimada', 'cantidad_prestada']
         widgets = {
-            'solicitud': forms.Select(attrs={'class': 'form-select'}),
+            'estudiante': forms.Select(attrs={'class': 'form-select'}),
             'equipo': forms.Select(attrs={'class': 'form-select'}),
             'fecha_devolucion_estimada': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'cantidad_prestada': forms.NumberInput(attrs={'class': 'form-control'}),
         }
     
-    # Validacion: No prestar más de lo disponible
     def clean(self):
         cleaned_data = super().clean()
         equipo = cleaned_data.get('equipo')
         cantidad = cleaned_data.get('cantidad_prestada')
 
         if equipo and cantidad:
-            if cantidad > equipo.cantidad:
-                self.add_error('cantidad_prestada', f"No se pueden prestar {cantidad}. Stock disponible: {equipo.cantidad}")
-        return cleaned_data
+            # (Verificamos si estamos editando para no contarnos a nosotros mismos)
+            cantidad_original = 0
+            if self.instance and self.instance.pk:
+                cantidad_original = self.instance.cantidad_prestada
+            
+            stock_disponible = equipo.cantidad + cantidad_original
 
-# --- FORMULARIO DE RESERVA DE TALLER (ACTUALIZADO) ---
+            if cantidad > stock_disponible:
+                self.add_error('cantidad_prestada', f"No se pueden prestar {cantidad}. Stock disponible: {stock_disponible}")
+        
+        return cleaned_data
 
 class FormReservaTaller(forms.ModelForm):
     class Meta:
@@ -143,7 +146,6 @@ class FormReservaTaller(forms.ModelForm):
         widgets = {
             'usuario': forms.Select(attrs={'class': 'form-select'}),
             'proposito': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            # Usamos datetime-local para que el usuario elija fecha y hora
             'inicio_reserva': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'fin_reserva': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'cantidad_alumnos': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -191,25 +193,29 @@ class BaseReservaTallerEquipoFormSet(BaseInlineFormSet):
         inicio = self.instance.inicio_reserva
         fin = self.instance.fin_reserva
 
-        equipos_solicitados = {}
-        
-        # 2. Validar duplicados y recolectar cantidades
+        equipos_solicitados = {}      # ahora guardará (cantidad, form)
+
+        # 2. Validar duplicados y recolectar cantidades y form referencia
         for form in self.forms:
             if self.can_delete and self._should_delete_form(form):
                 continue
-            
+
             equipo = form.cleaned_data.get('equipo')
             cantidad = form.cleaned_data.get('cantidad')
 
             if not equipo or not cantidad:
                 continue
-            
-            # Validar que no se pida el mismo equipo varias veces
-            if equipo in equipos_solicitados:
+
+            if equipo.pk in equipos_solicitados:
                 form.add_error('equipo', 'Este equipo ya fue seleccionado en esta reserva.')
                 raise ValidationError("No puedes reservar el mismo equipo dos veces.")
-            
-            equipos_solicitados[equipo] = cantidad
+
+            # guardo por pk para evitar problemas de identidad y conservar el form
+            equipos_solicitados[equipo.pk] = {
+                'equipo': equipo,
+                'cantidad': cantidad,
+                'form': form
+            }
 
         # 3. Validar disponibilidad de stock para cada equipo solicitado
         for equipo, cantidad_solicitada in equipos_solicitados.items():
@@ -232,7 +238,7 @@ class BaseReservaTallerEquipoFormSet(BaseInlineFormSet):
                 fecha_prestamo__lt=fin # Se prestó antes de que yo termine
             ).aggregate(total=Sum('cantidad_prestada'))['total'] or 0
 
-            # C. Ocupados por mantenciones (Asumimos que 1 mantención = 1 unidad)
+            # C. Ocupados por mantenciones
             en_mantencion = Mantencion.objects.filter(
                 equipo=equipo,
                 fecha_fin__gte=inicio.date(), # Termina después de que yo empiezo
@@ -246,10 +252,9 @@ class BaseReservaTallerEquipoFormSet(BaseInlineFormSet):
             if cantidad_solicitada > disponible:
                 # Error si se pide más de lo disponible
                 error_msg = f"Disponibilidad excedida. Solo quedan {disponible} unidades de '{equipo.nombre}' en ese horario (Ocupadas: {cantidad_ocupada})."
-                # Añade el error al formulario específico
-                form_con_error = next(f for f in self.forms if f.cleaned_data.get('equipo') == equipo)
+                # obtengo el form directo de la estructura
+                form_con_error = equipos_solicitados[equipo.pk]['form']
                 form_con_error.add_error('cantidad', error_msg)
-                # Lanza error general en el formset
                 raise ValidationError("No hay suficiente stock para uno o más equipos en el horario seleccionado.")
 
 # 4. Crear el Factory del FormSet

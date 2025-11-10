@@ -1,0 +1,57 @@
+{% extends "app/index.html" %}
+{% load static %}
+{% block title %}Mantenciones - Pañol{% endblock %}
+
+{% block contenido %}
+<div class="container mt-4">
+  <a href="{% url 'agregarMantencion' %}" class="btn btn-primary mb-3">Agregar mantencion</a>
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">Lista de Mantenciones</h5>
+    </div>
+    <ul class="list-group list-group-flush">
+      {% for s in mantenciones %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ s.nombre }}</strong>
+            <p class="mb-1 text-muted small">{{ s.fecha_inicio }} - {{ s.fecha_fin }}</p>
+            <p class="mb-1">{{ s.descripcion|truncatewords:20 }}</p>
+            {% if s.equipo %}
+              <p class="mb-1"><small>Equipo: {{ s.equipo.nombre }}</small></p>
+            {% endif %}
+            {% if s.responsable %}
+              <p class="mb-1"><small>Responsable: {{ s.responsable.username }}</small></p>
+            {% endif %}
+          </div>
+          <div>
+            <a href="{% url 'detalleMantencion' s.pk %}" class="btn btn-sm btn-outline-info">Ver</a>
+            <a href="{% url 'editarMantencion' s.id %}" class="btn btn-sm btn-warning">Editar</a>
+            <button type="button" 
+                    class="btn btn-sm btn-danger delete-mantencion" 
+                    data-form-url="{% url 'eliminarMantencion' s.id %}">
+              Eliminar
+            </button>
+          </div>
+        </li>
+      {% empty %}
+        <li class="list-group-item text-center text-muted">No hay mantenciones registradas.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
+
+{% block extrascripts %}
+<script>
+$(document).ready(function() {
+    $(".delete-mantencion").each(function () {
+        $(this).modalForm({
+            formURL: $(this).data('form-url'),
+            modalID: "#modal",
+            isDeleteForm: true
+        });
+    });
+});
+</script>
+{% endblock %}

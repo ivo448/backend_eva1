@@ -77,7 +77,7 @@ class Prestamo(models.Model):
         on_delete=models.CASCADE, 
         related_name='prestamos_recibidos',
         # Filtra el dropdown para mostrar solo usuarios con el rol de Estudiante
-        #limit_choices_to={'perfil__rol': 'ESTUDIANTE'}
+        limit_choices_to={'perfil__rol': 'ESTUDIANTE'}
     )
     
     registrado_por = models.ForeignKey(
@@ -86,7 +86,7 @@ class Prestamo(models.Model):
         null=True, 
         blank=True, 
         related_name='prestamos_registrados',
-        #limit_choices_to={'perfil__rol__in': ['PANOLERO', 'ADMIN']}
+        limit_choices_to={'perfil__rol__in': ['PANOLERO', 'ADMIN']}
     )
     
     equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE, related_name='prestamos')

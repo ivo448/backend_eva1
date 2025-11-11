@@ -15,6 +15,8 @@ import os
 import dotenv
 import socket
 import sys
+import pymysql
+pymysql.install_as_MySQLdb()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -31,6 +33,7 @@ IS_PRODUCTION = 'PYTHONANYWHERE_DOMAIN' in os.environ
 
 if IS_PRODUCTION:
     # --- Configuración de PRODUCCIÓN (PYTHONANYWHERE) ---
+    print("Entorno PythonAnywhere")
     DEBUG = False
     ALLOWED_HOSTS = ['panol.pythonanywhere.com']
 
@@ -42,7 +45,7 @@ if IS_PRODUCTION:
 
     DATABASES = {
         'default': {
-            'ENGINE': 'mysql.connector.django',
+            'ENGINE': 'django.db.backends.mysql',
             'NAME': DB_NAME,
             'USER': DB_USER,
             'PASSWORD': DB_PASS,

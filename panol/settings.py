@@ -40,6 +40,22 @@ if IS_PRODUCTION:
     DB_HOST = os.environ.get('PA_MYSQLHOST')
     DB_PORT = os.environ.get('PA_MYSQLPORT')
 
+    DATABASES = {
+        'default': {
+            'ENGINE': 'mysql.connector.django',
+            'NAME': DB_NAME,
+            'USER': DB_USER,
+            'PASSWORD': DB_PASS,
+            'HOST': DB_HOST,
+            'PORT': DB_PORT,
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4',
+                'options': {'_auth_data_func': lambda: None} 
+            },
+        }
+    }
+
 else:
     # --- Configuración de DESARROLLO (LOCAL) ---
     DEBUG = True
@@ -52,16 +68,16 @@ else:
     DB_HOST = os.environ.get('MYSQLHOST')
     DB_PORT = os.environ.get('MYSQLPORT')
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'mysql.connector.django',
-        'NAME': DB_NAME,
-        'USER': DB_USER,
-        'PASSWORD': DB_PASS,
-        'HOST': DB_HOST,
-        'PORT': DB_PORT,
+    DATABASES = {
+        'default': {
+            'ENGINE': 'mysql.connector.django',
+            'NAME': DB_NAME,
+            'USER': DB_USER,
+            'PASSWORD': DB_PASS,
+            'HOST': DB_HOST,
+            'PORT': DB_PORT,
+        }
     }
-}
 
 # Application definition
 
@@ -104,22 +120,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'panol.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'mysql.connector.django', 
-        'NAME': DB_NAME,
-        'USER': DB_USER,
-        'PASSWORD': DB_PASS,
-        'HOST': DB_HOST,
-        'PORT': DB_PORT,
-    }
-}
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

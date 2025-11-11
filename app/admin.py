@@ -22,7 +22,6 @@ class PerfilAdmin(admin.ModelAdmin):
     list_filter = ('rol',)
 
 class PrestamoAdmin(admin.ModelAdmin):
-    # 🚨 CAMBIO: Actualizados list_display y search_fields
     list_display = ('equipo', 'estudiante', 'registrado_por', 'cantidad_prestada', 'fecha_prestamo', 'fecha_devolucion_estimada', 'fecha_devolucion_real')
     search_fields = ('equipo__nombre', 'estudiante__username', 'registrado_por__username')
     list_filter = ('fecha_prestamo', 'fecha_devolucion_estimada', 'fecha_devolucion_real', 'estudiante')

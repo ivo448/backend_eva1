@@ -16,7 +16,6 @@ import dotenv
 import socket
 import sys
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # 2. Cargar el archivo .env
@@ -26,20 +25,43 @@ dotenv.load_dotenv(os.path.join(BASE_DIR, '.env'))
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!r$m9q9u08#r+7h&38$0@1_z(&!a&$g6+98wh(#9!hw4lxflz1'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
+IS_PRODUCTION = 'PYTHONANYWHERE_DOMAIN' in os.environ
 
-# SECURITY WARNING: don't run with debug turned on in production!
-# 3. Leer DEBUG desde .env (True local, False en PA)
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+if IS_PRODUCTION:
+    # --- Configuración de PRODUCCIÓN (PYTHONANYWHERE) ---
+    DEBUG = False
+    ALLOWED_HOSTS = ['panol.pythonanywhere.com']
 
-ALLOWED_HOSTS = ['panol.pythonanywhere.com','127.0.0.1']
+    DB_NAME = os.environ.get('PA_MYSQLDATABASE')
+    DB_USER = os.environ.get('PA_MYSQLUSER')
+    DB_PASS = os.environ.get('PA_MYSQLPASSWORD')
+    DB_HOST = os.environ.get('PA_MYSQLHOST')
+    DB_PORT = os.environ.get('PA_MYSQLPORT')
 
-DB_NAME = os.environ.get('MYSQLDATABASE')
-DB_USER = os.environ.get('MYSQLUSER')
-DB_PASS = os.environ.get('MYSQLPASSWORD')
-DB_HOST = os.environ.get('MYSQLHOST')
-DB_PORT = os.environ.get('MYSQLPORT')
+else:
+    # --- Configuración de DESARROLLO (LOCAL) ---
+    DEBUG = True
+    ALLOWED_HOSTS = []
+
+    # Lee las variables de tu archivo .env (Railway)
+    DB_NAME = os.environ.get('MYSQLDATABASE')
+    DB_USER = os.environ.get('MYSQLUSER')
+    DB_PASS = os.environ.get('MYSQLPASSWORD')
+    DB_HOST = os.environ.get('MYSQLHOST')
+    DB_PORT = os.environ.get('MYSQLPORT')
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'mysql.connector.django',
+        'NAME': DB_NAME,
+        'USER': DB_USER,
+        'PASSWORD': DB_PASS,
+        'HOST': DB_HOST,
+        'PORT': DB_PORT,
+    }
+}
 
 # Application definition
 
@@ -50,8 +72,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'app',
     'bootstrap_modal_forms',
+    'app.apps.AppConfig'
 ]
 
 MIDDLEWARE = [
@@ -133,11 +155,15 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'staticfiles')]
+
+MEDIA_URL = '/media/'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

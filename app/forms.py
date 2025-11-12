@@ -35,6 +35,13 @@ class FormEquipo(forms.ModelForm):
         return nombre
 
 class FormSolicitud(forms.ModelForm):
+    
+    usuario = forms.ModelChoiceField(
+        queryset=User.objects.filter(perfil__rol__in=['PROFESOR', 'ADMIN', 'DIRECTORCARRERA', 'PANOLERO']),
+        required=False, # Es Falso por defecto, la lógica __init__ lo hace requerido si es Pañolero
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
     class Meta:
         model = Solicitud
         fields = ['nombre', 'fecha', 'descripcion', 'usuario', 'estado']
@@ -42,9 +49,39 @@ class FormSolicitud(forms.ModelForm):
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'fecha': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control'}),
-            'usuario': forms.Select(attrs={'class': 'form-select'}),
             'estado': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    # LÓGICA DE ROLES
+    def __init__(self, *args, **kwargs):
+        # Recibimos el 'user' logueado desde la vista
+        self.user = kwargs.pop('user', None) 
+        super().__init__(*args, **kwargs)
+
+        if self.user and hasattr(self.user, 'perfil'):
+            user_rol = self.user.perfil.rol
+            
+            # REGLA: Si es Profesor, ocultamos el campo 'usuario'
+            if user_rol == 'PROFESOR':
+                if 'usuario' in self.fields:
+                    self.fields['usuario'].widget = forms.HiddenInput()
+                if 'estado' in self.fields:
+                    self.fields['estado'].widget = forms.HiddenInput()
+            
+            # REGLA: Si es Pañolero/Admin/Director, el campo 'usuario' (profesor) es obligatorio
+            elif user_rol in ['PANOLERO', 'ADMIN', 'DIRECTORCARRERA']:
+                if 'usuario' in self.fields:
+                    self.fields['usuario'].required = True
+                    self.fields['usuario'].label = "Profesor Solicitante"
+                
+                if 'estado' in self.fields:
+                    self.fields['estado'].widget = forms.Select(attrs={'class': 'form-select'})
+        
+        elif self.user and self.user.is_superuser:
+             # Caso para Superadmin sin perfil
+             if 'usuario' in self.fields:
+                self.fields['usuario'].required = True
+                self.fields['usuario'].label = "Profesor Solicitante (Admin)"
 
     # 1. Validacion de Formulario: Fecha no puede ser en el pasado
     def clean_fecha(self):
@@ -113,13 +150,20 @@ class FormPerfil(forms.ModelForm):
 class FormPrestamo(forms.ModelForm):
     class Meta:
         model = Prestamo
-        fields = ['estudiante', 'equipo', 'fecha_devolucion_estimada', 'cantidad_prestada']
+        fields = ['rut_estudiante', 'nombre_estudiante', 'equipo', 'fecha_devolucion_estimada', 'cantidad_prestada']
         widgets = {
-            'estudiante': forms.Select(attrs={'class': 'form-select'}),
+            'rut_estudiante': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '12.345.678-9'}),
+            'nombre_estudiante': forms.TextInput(attrs={'class': 'form-control'}),
             'equipo': forms.Select(attrs={'class': 'form-select'}),
             'fecha_devolucion_estimada': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'cantidad_prestada': forms.NumberInput(attrs={'class': 'form-control'}),
         }
+    
+    def clean_rut_estudiante(self):
+        rut = self.cleaned_data.get('rut_estudiante')
+        if not rut:
+            raise ValidationError("El RUT del estudiante es obligatorio.")
+        return rut
     
     def clean(self):
         cleaned_data = super().clean()
@@ -142,9 +186,8 @@ class FormPrestamo(forms.ModelForm):
 class FormReservaTaller(forms.ModelForm):
     class Meta:
         model = ReservaTaller
-        fields = ['usuario', 'proposito', 'inicio_reserva', 'fin_reserva', 'cantidad_alumnos']
+        fields = ['proposito', 'inicio_reserva', 'fin_reserva', 'cantidad_alumnos']
         widgets = {
-            'usuario': forms.Select(attrs={'class': 'form-select'}),
             'proposito': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'inicio_reserva': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'fin_reserva': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),

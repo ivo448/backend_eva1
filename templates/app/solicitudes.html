@@ -7,33 +7,20 @@
   <a href="{% url 'agregarSolicitud' %}" class="btn btn-primary mb-3">Agregar solicitud</a>
 
   <div class="card shadow-sm">
-    <div class="card-header bg-light">
-      <h5 class="mb-0">Lista de Solicitudes</h5>
-    </div>
     <ul class="list-group list-group-flush">
       {% for s in solicitudes %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
           <div>
-            <strong>{{ s.nombre }}</strong>
-            <span class="badge 
-              {% if s.estado == 'APROBADO' %} bg-success 
-              {% elif s.estado == 'RECHAZADO' %} bg-danger
-              {% else %} bg-warning text-dark {% endif %}
-            ">{{ s.get_estado_display }}</span>
-            <p class="mb-1">{{ s.descripcion|truncatewords:20 }}</p>
-            <small class="text-muted">Fecha: {{ s.fecha }}</small>
-            {% if s.usuario %}
-              <div><small class="text-muted">Solicitado por: {{ s.usuario.username }}</small></div>
-            {% endif %}
-          </div>
-          <div>
             <a href="{% url 'detalleSolicitud' s.pk %}" class="btn btn-sm btn-outline-info">Ver</a>
-            <a href="{% url 'editarSolicitud' s.id %}" class="btn btn-sm btn-warning">Editar</a>
-            <button type="button" 
-                    class="btn btn-sm btn-danger delete-solicitud" 
-                    data-form-url="{% url 'eliminarSolicitud' s.id %}">
-              Eliminar
-            </button>
+            
+            {% if user.is_superuser or user.perfil.rol == 'PANOLERO' or user.perfil.rol == 'DIRECTORCARRERA' or user.perfil.rol == 'ADMIN' %}
+              <a href="{% url 'editarSolicitud' s.pk %}" class="btn btn-sm btn-warning">Editar</a>
+              <button type="button" 
+                      class="btn btn-sm btn-danger delete-solicitud" 
+                      data-form-url="{% url 'eliminarSolicitud' s.pk %}">
+                Eliminar
+              </button>
+            {% endif %}
           </div>
         </li>
       {% empty %}

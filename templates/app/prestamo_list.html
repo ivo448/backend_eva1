@@ -17,7 +17,7 @@
             <strong>{{ p.equipo.nombre }}</strong> (x{{ p.cantidad_prestada }})
             
             <p class="mb-1 text-muted small">
-                Estudiante: {{ p.estudiante.username }}
+                Estudiante: {{ p.nombre_estudiante }} (RUT: {{ p.rut_estudiante }})
             </p>
             <p class="mb-1 text-muted small">
                 Registrado por: {{ p.registrado_por.username|default:"N/A" }}
@@ -34,10 +34,10 @@
           </div>
           <div>
             <a href="{% url 'detallePrestamo' p.pk %}" class="btn btn-sm btn-outline-info">Ver</a>
-            <a href="{% url 'editarPrestamo' p.id %}" class="btn btn-sm btn-warning">Editar</a>
+            <a href="{% url 'editarPrestamo' p.pk %}" class="btn btn-sm btn-warning">Editar</a>
             <button type="button" 
                     class="btn btn-sm btn-danger delete-prestamo" 
-                    data-form-url="{% url 'eliminarPrestamo' p.id %}">
+                    data-form-url="{% url 'eliminarPrestamo' p.pk %}">
               Eliminar
             </button>
           </div>
@@ -51,4 +51,15 @@
 {% endblock %}
 
 {% block extrascripts %}
+<script>
+$(document).ready(function() {
+    $(".delete-prestamo").each(function () {
+        $(this).modalForm({
+            formURL: $(this).data('form-url'),
+            modalID: "#modal",
+            isDeleteForm: true
+        });
+    });
+});
+</script>
 {% endblock %}

@@ -18,12 +18,11 @@ from django.contrib import messages
 from django.db import transaction
 from django.contrib.messages.views import SuccessMessageMixin
 
-# 1. IMPORTAR LOS MIXINS Y DECORADORES CORRECTOS
+# 1. IMPORTAR LOS MIXINS Y DECORADORES
 from .decorators import panolero_required, profesor_required
-from .decorators import PanoleroRequiredMixin, ProfesorRequiredMixin
+from .decorators import PanoleroRequiredMixin, ProfesorRequiredMixin, StaffRequiredMixin
 
 # --- VISTAS DE AUTENTICACIÓN Y PRINCIPALES (FBV) ---
-# (Se mantienen como FBV por su lógica única)
 
 def login_view(request):
     if request.method == "POST":
@@ -51,9 +50,9 @@ def index(request):
     return render(request, 'app/index.html', data)
 
 # --- CRUD EQUIPOS (CBV) ---
-# (Solo Pañoleros y Admin)
 
-class EquipoListView(PanoleroRequiredMixin, ListView):
+# Profesores y Pañoleros pueden VER la lista
+class EquipoListView(StaffRequiredMixin, ListView):
     model = Equipo
     template_name = 'app/equipos.html'
     context_object_name = 'equipos'
@@ -100,19 +99,18 @@ class EquipoDeleteView(PanoleroRequiredMixin, BSModalDeleteView):
 
 
 # --- CRUD SOLICITUDES (CBV) ---
-# (Pañoleros, Profesores y Admin)
 
-class SolicitudListView(ProfesorRequiredMixin, ListView):
+class SolicitudListView(StaffRequiredMixin, ListView):
     model = Solicitud
     template_name = 'app/solicitudes.html'
     context_object_name = 'solicitudes'
 
-class SolicitudDetailView(ProfesorRequiredMixin, DetailView):
+class SolicitudDetailView(StaffRequiredMixin, DetailView):
     model = Solicitud
     template_name = 'app/solicitud_detail.html'
     context_object_name = 'solicitud'
 
-class SolicitudCreateView(ProfesorRequiredMixin, SuccessMessageMixin, CreateView):
+class SolicitudCreateView(StaffRequiredMixin, SuccessMessageMixin, CreateView):
     model = Solicitud
     form_class = FormSolicitud
     template_name = 'app/generic_form.html'
@@ -123,6 +121,11 @@ class SolicitudCreateView(ProfesorRequiredMixin, SuccessMessageMixin, CreateView
         context = super().get_context_data(**kwargs)
         context['titulo'] = "Agregar Solicitud"
         return context
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
     def form_valid(self, form):
         # Asignar usuario si no se seleccionó (o si el campo está oculto)
@@ -130,7 +133,7 @@ class SolicitudCreateView(ProfesorRequiredMixin, SuccessMessageMixin, CreateView
             form.instance.usuario = self.request.user
         return super().form_valid(form)
 
-class SolicitudUpdateView(ProfesorRequiredMixin, SuccessMessageMixin, UpdateView):
+class SolicitudUpdateView(PanoleroRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Solicitud
     form_class = FormSolicitud
     template_name = 'app/generic_form.html'
@@ -141,8 +144,13 @@ class SolicitudUpdateView(ProfesorRequiredMixin, SuccessMessageMixin, UpdateView
         context = super().get_context_data(**kwargs)
         context['titulo'] = f"Editar Solicitud: {self.object.nombre}"
         return context
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
-class SolicitudDeleteView(ProfesorRequiredMixin, BSModalDeleteView):
+class SolicitudDeleteView(PanoleroRequiredMixin, BSModalDeleteView):
     model = Solicitud
     template_name = 'app/eliminarSolicitud.html'
     success_message = 'Solicitud eliminada correctamente.'
@@ -224,7 +232,7 @@ class PrestamoListView(PanoleroRequiredMixin, ListView):
     model = Prestamo
     template_name = 'app/prestamo_list.html'
     context_object_name = 'prestamos'
-    queryset = Prestamo.objects.select_related('estudiante', 'equipo', 'registrado_por').all()
+    queryset = Prestamo.objects.select_related('equipo', 'registrado_por').all()
 
 class PrestamoDetailView(PanoleroRequiredMixin, DetailView):
     model = Prestamo
@@ -247,10 +255,10 @@ class PrestamoCreateView(PanoleroRequiredMixin, SuccessMessageMixin, CreateView)
     def form_valid(self, form):
         prestamo = form.save(commit=False)
         
-        # 🚨 NUEVO: Asignar al Pañolero logueado
+        # Asignar al Pañolero logueado
         prestamo.registrado_por = self.request.user
         
-        # Lógica de stock (sin cambios)
+        # Lógica de stock
         prestamo.equipo.cantidad -= prestamo.cantidad_prestada
         prestamo.equipo.save()
         messages.success(self.request, f"Stock de {prestamo.equipo.nombre} reducido a {prestamo.equipo.cantidad}.")
@@ -329,16 +337,22 @@ def listadoReservasTaller(request):
 @transaction.atomic
 def agregarReservaTaller(request):
     if request.method == 'POST':
-        form = FormReservaTaller(request.POST)
+        form = FormReservaTaller(request.POST) # <-- El form ya no tiene 'usuario'
         formset = ReservaTallerEquipoFormSet(request.POST, instance=ReservaTaller())
         
         if form.is_valid():
-            reserva = form.save(commit=False)
+            # Creamos el objeto en memoria sin guardarlo
+            reserva = form.save(commit=False) 
+            
+            # 🚨 CAMBIO AQUÍ: Asignamos el usuario logueado (Profesor)
+            reserva.usuario = request.user 
+            
+            # Pasamos la instancia de reserva (ahora con usuario) al formset
             formset = ReservaTallerEquipoFormSet(request.POST, instance=reserva)
             
             if formset.is_valid():
-                reserva.save()
-                formset.save()
+                reserva.save() # Guardamos la reserva principal
+                formset.save() # Guardamos los equipos asociados
                 messages.success(request, 'Reserva de taller y equipos registrada correctamente.')
                 return redirect('reservas_taller')
             else:
@@ -347,7 +361,7 @@ def agregarReservaTaller(request):
             messages.error(request, 'Error en los datos de la reserva. Revisa el formulario.')
     
     else: # Método GET
-        form = FormReservaTaller()
+        form = FormReservaTaller() # <-- El form ya no pide 'usuario'
         formset = ReservaTallerEquipoFormSet(instance=ReservaTaller())
 
     return render(request, 'app/reserva_taller_form.html', {

@@ -15,7 +15,9 @@
 
             <hr>
             <h4>Información del Préstamo</h4>
-            <p><strong>Estudiante:</strong> {{ prestamo.estudiante.username }} ({{ prestamo.estudiante.first_name }} {{ prestamo.estudiante.last_name }})</p>
+            
+            <p><strong>Nombre Estudiante:</strong> {{ prestamo.nombre_estudiante }}</p>
+            <p><strong>RUT Estudiante:</strong> {{ prestamo.rut_estudiante }}</p>
             <p><strong>Registrado por (Pañolero):</strong> {{ prestamo.registrado_por.username|default:"N/A" }}</p>
             
             <hr>
@@ -31,7 +33,7 @@
             </p>
             
             <hr>
-            <a href="{% url 'editarPrestamo' prestamo.id %}" class="btn btn-warning">Editar</a>
+            <a href="{% url 'editarPrestamo' prestamo.pk %}" class="btn btn-warning">Editar</a>
         </div>
     </div>
 </div>

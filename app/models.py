@@ -23,9 +23,17 @@ class Solicitud(models.Model):
         ('APROBADO', 'Aprobado'),
         ('RECHAZADO', 'Rechazado'),
     ]
-
     nombre = models.CharField(max_length=100)
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='solicitudes', null=True, blank=True)
+    
+    usuario = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='solicitudes', 
+        null=True, 
+        blank=True,
+        # Filtra el dropdown para mostrar solo usuarios con estos roles
+        limit_choices_to={'perfil__rol__in': ['PROFESOR', 'ADMIN', 'DIRECTORCARRERA', 'PANOLERO']}
+    )
     fecha = models.DateField()
     descripcion = models.CharField(max_length=500)
     estado = models.CharField(max_length=10, choices=ESTADO_OPCIONES, default='PENDIENTE')
@@ -33,11 +41,10 @@ class Solicitud(models.Model):
     def __str__(self):
         return f"{self.nombre} ({self.get_estado_display()})"
     
-    # Validacion a nivel de modelo: No se pueden crear solicitudes para fechas pasadas.
     def clean(self):
         if self.fecha < timezone.now().date():
             raise ValidationError('La fecha de la solicitud no puede ser en el pasado.')
-
+        
 class Mantencion(models.Model):
     nombre = models.CharField(max_length=100)
     equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE, related_name='mantenciones', null=True, blank=True)
@@ -73,13 +80,8 @@ class Perfil(models.Model):
         return f"Perfil de {self.usuario.username} ({self.get_rol_display()})"
 
 class Prestamo(models.Model):
-    estudiante = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
-        related_name='prestamos_recibidos',
-        # Filtra el dropdown para mostrar solo usuarios con el rol de Estudiante
-        limit_choices_to={'perfil__rol': 'ESTUDIANTE'}
-    )
+    rut_estudiante = models.CharField(max_length=12, help_text="Ej: 12.345.678-9", null=True, blank=True)
+    nombre_estudiante = models.CharField(max_length=200,null=True, blank=True)
     
     registrado_por = models.ForeignKey(
         User, 
@@ -87,9 +89,8 @@ class Prestamo(models.Model):
         null=True, 
         blank=True, 
         related_name='prestamos_registrados',
-        limit_choices_to={'perfil__rol__in': ['PANOLERO', 'ADMIN']}
+        limit_choices_to={'perfil__rol__in': ['PANOLERO', 'ADMIN', 'DIRECTORCARRERA']}
     )
-    
     equipo = models.ForeignKey(Equipo, on_delete=models.CASCADE, related_name='prestamos')
     fecha_prestamo = models.DateTimeField(auto_now_add=True)
     fecha_devolucion_estimada = models.DateTimeField()
@@ -97,12 +98,11 @@ class Prestamo(models.Model):
     cantidad_prestada = models.IntegerField(validators=[MinValueValidator(1)])
 
     def __str__(self):
-        return f"Préstamo de {self.equipo.nombre} a {self.estudiante.username}"
+        return f"Préstamo de {self.equipo.nombre} a {self.nombre_estudiante}"
 
     def clean(self):
         if self.cantidad_prestada > self.equipo.cantidad:
             raise ValidationError(f"No se pueden prestar {self.cantidad_prestada}. Stock disponible: {self.equipo.cantidad}")
-        
         if self.fecha_devolucion_estimada <= timezone.now():
             raise ValidationError("La fecha de devolución estimada debe ser en el futuro.")
 

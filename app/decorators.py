@@ -33,12 +33,12 @@ def role_required(allowed_roles=[]):
         return wrapper
     return decorator
 
-# Roles específicos que usaremos en views.py
+# Decoradores específicos
 panolero_required = role_required(allowed_roles=['PANOLERO', 'ADMIN'])
 profesor_required = role_required(allowed_roles=['PROFESOR', 'ADMIN'])
 
 
-# --- MIXINS (Para Vistas-Clases como ListView, DetailView, etc.) ---
+# --- MIXINS ---
 
 class PanoleroRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Solo Pañoleros y Admins"""

@@ -57,13 +57,14 @@ class Mantencion(models.Model):
 class Perfil(models.Model):
     ROL_OPCIONES = [
         ('ADMIN', 'Administrador'),
+        ('DIRECTORCARRERA', 'Director de Carrera'),
         ('PANOLERO', 'Pañolero'),
         ('PROFESOR', 'Profesor'),
         ('ESTUDIANTE', 'Estudiante'),
     ]
     # OneToOneField extiende el modelo User de Django
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil') 
-    rol = models.CharField(max_length=10, choices=ROL_OPCIONES, default='ESTUDIANTE')
+    rol = models.CharField(max_length=19, choices=ROL_OPCIONES, default='ESTUDIANTE')
     rut = models.CharField(max_length=12, blank=True, null=True)
     telefono = models.CharField(max_length=15, blank=True, null=True)
     direccion = models.CharField(max_length=255, blank=True, null=True)

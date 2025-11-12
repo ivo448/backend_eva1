@@ -13,21 +13,21 @@ urlpatterns = [
     # -- CRUD SOLICITUDES --
     path('solicitudes/', views.SolicitudListView.as_view(), name="solicitudes"),
     path('solicitudes/agregar/', views.SolicitudCreateView.as_view(), name="agregarSolicitud"),
-    path('solicitudes/editar/<int:pk>/', views.SolicitudUpdateView.as_view(), name="editarSolicitud"), # 'pk' es estándar para CBV
+    path('solicitudes/editar/<int:pk>/', views.SolicitudUpdateView.as_view(), name="editarSolicitud"),
     path('solicitudes/detalle/<int:pk>/', views.SolicitudDetailView.as_view(), name="detalleSolicitud"),
     path('solicitudes/eliminar/<int:pk>/', views.SolicitudDeleteView.as_view(), name="eliminarSolicitud"),
     
     # -- CRUD EQUIPOS --
     path('equipos/', views.EquipoListView.as_view(), name="equipos"),
     path('equipos/agregar/', views.EquipoCreateView.as_view(), name="agregarEquipo"),
-    path('equipos/editar/<int:pk>/', views.EquipoUpdateView.as_view(), name="editarEquipo"), # 'pk' es estándar para CBV
+    path('equipos/editar/<int:pk>/', views.EquipoUpdateView.as_view(), name="editarEquipo"),
     path('equipos/detalle/<int:pk>/', views.EquipoDetailView.as_view(), name="detalleEquipo"),
     path('equipos/eliminar/<int:pk>/', views.EquipoDeleteView.as_view(), name="eliminarEquipo"),
     
     # -- CRUD MANTENCIONES --
     path('mantenciones/', views.MantencionListView.as_view(), name="mantenciones"),
     path('mantenciones/agregar/', views.MantencionCreateView.as_view(), name="agregarMantencion"),
-    path('mantenciones/editar/<int:pk>/', views.MantencionUpdateView.as_view(), name="editarMantencion"), # 'pk' es estándar para CBV
+    path('mantenciones/editar/<int:pk>/', views.MantencionUpdateView.as_view(), name="editarMantencion"),
     path('mantenciones/detalle/<int:pk>/', views.MantencionDetailView.as_view(), name="detalleMantencion"),
     path('mantenciones/eliminar/<int:pk>/', views.MantencionDeleteView.as_view(), name="eliminarMantencion"),
 
@@ -46,7 +46,7 @@ urlpatterns = [
     # -- CRUD RESERVA TALLER --
     path('reservas/', views.listadoReservasTaller, name="reservas_taller"),
     path('reservas/agregar/', views.agregarReservaTaller, name="agregarReservaTaller"),
-    path('reservas/editar/<int:id>/', views.editarReservaTaller, name="editarReservaTaller"), # 'id' por FBV
+    path('reservas/editar/<int:id>/', views.editarReservaTaller, name="editarReservaTaller"),
     path('reservas/detalle/<int:pk>/', views.ReservaTallerDetailView.as_view(), name="detalleReservaTaller"),
     path('reservas/eliminar/<int:pk>/', views.ReservaTallerDeleteView.as_view(), name="eliminarReservaTaller"),
 ]

@@ -194,8 +194,6 @@ class MantencionDeleteView(PanoleroRequiredMixin, BSModalDeleteView):
 
 
 # --- CRUD PERFILES (CBV) ---
-# (Solo Admin)
-# NOTA: Usamos AdminRequiredMixin para 'Perfiles'
 
 class PerfilListView(PanoleroRequiredMixin, ListView): # Permitimos a Staff ver
     model = Perfil
@@ -226,7 +224,6 @@ class PrestamoListView(PanoleroRequiredMixin, ListView):
     model = Prestamo
     template_name = 'app/prestamo_list.html'
     context_object_name = 'prestamos'
-    # 🚨 CAMBIO: Actualizamos el 'select_related'
     queryset = Prestamo.objects.select_related('estudiante', 'equipo', 'registrado_por').all()
 
 class PrestamoDetailView(PanoleroRequiredMixin, DetailView):

@@ -1,53 +1,40 @@
 from django.contrib import admin
-from .models import Equipo, Solicitud, Mantencion, Perfil, Prestamo, ReservaTaller
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
+from .models import Categoria, Equipo, Perfil, Reserva, Requerimiento, Mantencion
 
+class PerfilInline(admin.StackedInline):
+    model = Perfil
+    can_delete = False
+    verbose_name_plural = 'Perfil (Rol)'
+
+class UserAdmin(BaseUserAdmin):
+    inlines = (PerfilInline,)
+
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
+
+@admin.register(Categoria)
+class CategoriaAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'descripcion')
+
+@admin.register(Equipo)
 class EquipoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'nombre', 'cantidad', 'creado_por')
-    search_fields = ('nombre', 'descripcion', 'creado_por__username')
-    list_filter = ('cantidad', 'creado_por')
+    list_display = ('nombre', 'marca', 'modelo', 'categoria', 'estado')
+    list_filter = ('estado', 'categoria')
+    search_fields = ('nombre', 'modelo')
 
-class SolicitudAdmin(admin.ModelAdmin):
-    list_display = ('id', 'nombre', 'usuario', 'fecha', 'estado')
-    search_fields = ('nombre', 'descripcion', 'usuario__username')
-    list_filter = ('fecha', 'usuario', 'estado')
+@admin.register(Reserva)
+class ReservaAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'equipo', 'fecha_inicio', 'estado')
+    list_filter = ('estado', 'fecha_inicio')
 
+@admin.register(Requerimiento)
+class RequerimientoAdmin(admin.ModelAdmin):
+    list_display = ('usuario', 'descripcion', 'estado', 'fecha_solicitud')
+    list_filter = ('estado',)
+
+@admin.register(Mantencion)
 class MantencionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'nombre', 'equipo', 'fecha_inicio', 'fecha_fin', 'responsable')
-    search_fields = ('nombre', 'descripcion', 'equipo__nombre', 'responsable__username')
-    list_filter = ('equipo', 'responsable')
-
-class PerfilAdmin(admin.ModelAdmin):
-    list_display = ('usuario', 'rol', 'rut', 'telefono')
-    search_fields = ('usuario__username', 'rut', 'rol')
-    list_filter = ('rol',)
-
-class PrestamoAdmin(admin.ModelAdmin):
-    list_display = (
-        'equipo', 
-        'nombre_estudiante',
-        'rut_estudiante',  
-        'registrado_por', 
-        'cantidad_prestada', 
-        'fecha_prestamo', 
-        'fecha_devolucion_estimada', 
-        'fecha_devolucion_real'
-    )
-    search_fields = (
-        'equipo__nombre', 
-        'nombre_estudiante', 
-        'rut_estudiante', 
-        'registrado_por__username'
-    )
-    list_filter = ('fecha_prestamo', 'fecha_devolucion_estimada', 'fecha_devolucion_real', 'equipo')
-
-class ReservaTallerAdmin(admin.ModelAdmin):
-    list_display = ('usuario', 'proposito', 'inicio_reserva', 'fin_reserva')
-    search_fields = ('usuario__username', 'proposito')
-    list_filter = ('inicio_reserva', 'fin_reserva')
-
-admin.site.register(Equipo, EquipoAdmin)
-admin.site.register(Solicitud, SolicitudAdmin)
-admin.site.register(Mantencion, MantencionAdmin)
-admin.site.register(Perfil, PerfilAdmin)
-admin.site.register(Prestamo, PrestamoAdmin)
-admin.site.register(ReservaTaller, ReservaTallerAdmin)
+    list_display = ('equipo', 'fecha_programada', 'estado')
+    list_filter = ('estado', 'fecha_programada')

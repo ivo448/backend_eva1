@@ -15,6 +15,7 @@ venv/
 ENV/
 *.env
 *.env.local
+.env
 
 # --- Archivos de Django ---
 *.log

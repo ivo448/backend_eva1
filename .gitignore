@@ -47,3 +47,5 @@ yarn-error.log*
 .pnp.js
 .cache/
 .next/
+
+build.sh

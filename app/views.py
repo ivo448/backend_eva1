@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 from django.contrib.auth.models import User
+from datetime import date
 
 # Importamos tus modelos
 from .models import Equipo, Categoria, Reserva, Requerimiento, Mantencion
@@ -45,14 +46,11 @@ class CategoriaViewSet(viewsets.ModelViewSet):
 class EquipoViewSet(viewsets.ModelViewSet):
     """
     Gestión de Equipos (Inventario).
-    - Los alumnos verán esto si en el Admin les diste 'view_equipo'.
-    - Solo Pañoleros editarán si tienen 'change_equipo'.
     """
     queryset = Equipo.objects.all()
     serializer_class = EquipoSerializer
     permission_classes = [IsAuthenticated, DjangoModelPermissions]
 
-    # Filtro por estado: /api/equipos/?estado=DISPONIBLE
     def get_queryset(self):
         queryset = super().get_queryset()
         estado = self.request.query_params.get('estado')
@@ -60,13 +58,42 @@ class EquipoViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(estado=estado)
         return queryset
 
+    # --- Al crear equipo ---
+    def perform_create(self, serializer):
+        # 1. Guardamos el equipo nuevo
+        instance = serializer.save()
+
+        # Si se crea en mantencion crear mantencion
+        if instance.estado == 'MANTENCION':
+            Mantencion.objects.create(
+                equipo=instance,
+                fecha_programada=date.today(), # Se agenda para hoy
+                descripcion="Mantención inicial generada automáticamente al crear el equipo.",
+                estado='PENDIENTE'
+            )
+
+    # --- Al editar equipo ---
+    def perform_update(self, serializer):
+        # 1. Obtenemos el estado ANTERIOR antes de guardar
+        previous_status = self.get_object().estado
+        
+        # 2. Guardamos los cambios nuevos
+        instance = serializer.save()
+
+        # 3. Si cambió a "MANTENCION"
+        if instance.estado == 'MANTENCION' and previous_status != 'MANTENCION':
+            Mantencion.objects.create(
+                equipo=instance,
+                fecha_programada=date.today(),
+                descripcion="Equipo enviado a mantención desde el inventario.",
+                estado='PENDIENTE'
+            )
+
 class ReservaViewSet(viewsets.ModelViewSet):
     """
-    Gestión de Reservas.
-    ⚠️ EXCEPCIÓN DE SEGURIDAD:
-    Aquí NO usamos DjangoModelPermissions porque necesitamos lógica de 'Dueño'.
-    Usamos IsOwnerOrAdminGroup para que el profesor pueda cancelar SU reserva
-    sin tener permiso de 'borrar todas las reservas'.
+    Gestión de Reservas
+    Se usa IsOwnerOrAdminGroup para que el profesor pueda cancelar SU reserva
+    sin tener permiso de 'borrar todas las reservas'
     """
     queryset = Reserva.objects.all().order_by('-fecha_inicio')
     serializer_class = ReservaSerializer
@@ -76,10 +103,9 @@ class ReservaViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
         user = self.request.user
         
-        # Lógica visual: Si soy Admin/Pañolero veo todo.
-        # Si soy usuario normal, Django solo me devuelve MIS reservas.
-        # (Esto se basa en verificar si el usuario tiene permisos de gestión global)
-        can_manage_all = user.has_perm('app.view_reserva') or user.groups.filter(name__in=['ADMIN', 'PANOLERO']).exists()
+        # Si soy Admin/Pañolero veo todo
+        # Si soy usuario normal, Django solo me devuelve MIS reservas
+        can_manage_all = user.has_perm('app.view_reserva') or user.groups.filter(name__in=['admin', 'panolero']).exists()
         
         if not can_manage_all:
             queryset = queryset.filter(usuario=user)
@@ -108,7 +134,6 @@ class MantencionViewSet(viewsets.ModelViewSet):
 
             # B. CREAR LA SIGUIENTE MANTENCIÓN (Ciclo)
             # Buscamos si el Frontend nos mandó una fecha futura
-            # Usamos self.request.data directamente porque este campo no está en el Serializer
             proxima_fecha = self.request.data.get('nueva_fecha_programada')
             
             if proxima_fecha:

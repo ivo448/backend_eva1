@@ -1,18 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-class Perfil(models.Model):
-    ROLES = [
-        ('PROFESOR', 'Profesor'),
-        ('PANOLERO', 'Pañolero'),
-        ('ADMIN', 'Administrador'),
-    ]
-    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
-    rol = models.CharField(max_length=20, choices=ROLES, default='PROFESOR')
-
-    def __str__(self):
-        return f"{self.usuario.username} - {self.get_rol_display()}"
-
 class Categoria(models.Model):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True)
@@ -55,19 +43,26 @@ class Reserva(models.Model):
         return f"Reserva: {self.equipo} para {self.usuario}"
 
 class Requerimiento(models.Model):
-    ESTADOS = [
-        ('PENDIENTE', 'Pendiente'),
-        ('EN_PROCESO', 'En Proceso'),
-        ('COMPLETADO', 'Completado'),
-        ('RECHAZADO', 'Rechazado')
-    ]
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='requerimientos')
-    descripcion = models.TextField(help_text="Descripción del material faltante")
-    estado = models.CharField(max_length=20, choices=ESTADOS, default='PENDIENTE')
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
+    descripcion = models.TextField()
     fecha_solicitud = models.DateTimeField(auto_now_add=True)
+    
+    # --- AGREGA ESTE CAMPO QUE FALTABA ---
+    prioridad = models.CharField(
+        max_length=10,
+        choices=[('BAJA', 'Baja'), ('MEDIA', 'Media'), ('ALTA', 'Alta')],
+        default='MEDIA'
+    )
+    # -------------------------------------
+
+    estado = models.CharField(
+        max_length=20, 
+        choices=[('PENDIENTE', 'Pendiente'), ('APROBADO', 'Aprobado'), ('RECHAZADO', 'Rechazado')],
+        default='PENDIENTE'
+    )
 
     def __str__(self):
-        return f"Req: {self.usuario} - {self.estado}"
+        return f"Solicitud de {self.usuario.username}"
 
 class Mantencion(models.Model):
     ESTADOS = [

@@ -1,23 +1,58 @@
 from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, DjangoModelPermissions
 from django.contrib.auth.models import User
+
+# Importamos tus modelos
 from .models import Equipo, Categoria, Reserva, Requerimiento, Mantencion
+
+# Importamos los Serializers
 from .serializers import (
     EquipoSerializer, CategoriaSerializer, UserSerializer, 
     ReservaSerializer, RequerimientoSerializer, MantencionSerializer
 )
 
+# Importamos el permiso custom SOLO para Reservas (Lógica de Dueño)
+from .permissions import IsOwnerOrAdminGroup
+
 class UserViewSet(viewsets.ModelViewSet):
+    """
+    Controlador de Usuarios.
+    """
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    # Solo los que tengan permiso 'view_user' (Admins) pueden ver la lista completa
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+
+    # Endpoint especial: /api/users/me/
+    # Este es vital para que React sepa qué permisos tiene el usuario logueado
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def me(self, request):
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)
 
 class CategoriaViewSet(viewsets.ModelViewSet):
+    """
+    Gestión de Categorías.
+    - GET: Requiere permiso 'app.view_categoria'
+    - POST/PUT/DELETE: Requiere permisos 'add', 'change', 'delete'
+    """
     queryset = Categoria.objects.all()
     serializer_class = CategoriaSerializer
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
 
 class EquipoViewSet(viewsets.ModelViewSet):
+    """
+    Gestión de Equipos (Inventario).
+    - Los alumnos verán esto si en el Admin les diste 'view_equipo'.
+    - Solo Pañoleros editarán si tienen 'change_equipo'.
+    """
     queryset = Equipo.objects.all()
     serializer_class = EquipoSerializer
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
 
+    # Filtro por estado: /api/equipos/?estado=DISPONIBLE
     def get_queryset(self):
         queryset = super().get_queryset()
         estado = self.request.query_params.get('estado')
@@ -26,20 +61,86 @@ class EquipoViewSet(viewsets.ModelViewSet):
         return queryset
 
 class ReservaViewSet(viewsets.ModelViewSet):
-    queryset = Reserva.objects.all()
+    """
+    Gestión de Reservas.
+    ⚠️ EXCEPCIÓN DE SEGURIDAD:
+    Aquí NO usamos DjangoModelPermissions porque necesitamos lógica de 'Dueño'.
+    Usamos IsOwnerOrAdminGroup para que el profesor pueda cancelar SU reserva
+    sin tener permiso de 'borrar todas las reservas'.
+    """
+    queryset = Reserva.objects.all().order_by('-fecha_inicio')
     serializer_class = ReservaSerializer
+    permission_classes = [IsAuthenticated, IsOwnerOrAdminGroup]
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        usuario = self.request.query_params.get('usuario')
-        if usuario:
-            queryset = queryset.filter(usuario_id=usuario)
+        user = self.request.user
+        
+        # Lógica visual: Si soy Admin/Pañolero veo todo.
+        # Si soy usuario normal, Django solo me devuelve MIS reservas.
+        # (Esto se basa en verificar si el usuario tiene permisos de gestión global)
+        can_manage_all = user.has_perm('app.view_reserva') or user.groups.filter(name__in=['ADMIN', 'PANOLERO']).exists()
+        
+        if not can_manage_all:
+            queryset = queryset.filter(usuario=user)
+            
         return queryset
 
-class RequerimientoViewSet(viewsets.ModelViewSet):
-    queryset = Requerimiento.objects.all()
-    serializer_class = RequerimientoSerializer
+    # Al crear, el dueño es el usuario logueado automáticamente
+    def perform_create(self, serializer):
+        serializer.save(usuario=self.request.user)
 
 class MantencionViewSet(viewsets.ModelViewSet):
     queryset = Mantencion.objects.all().order_by('fecha_programada')
     serializer_class = MantencionSerializer
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+
+    def perform_update(self, serializer):
+        # 1. Guardamos la actualización de la mantención actual
+        instance = serializer.save()
+
+        # 2. Si se marca como FINALIZADA, ejecutamos la lógica automática
+        if instance.estado == 'FINALIZADA':
+            # A. Liberar el equipo
+            equipo = instance.equipo
+            equipo.estado = 'DISPONIBLE'
+            equipo.save()
+
+            # B. CREAR LA SIGUIENTE MANTENCIÓN (Ciclo)
+            # Buscamos si el Frontend nos mandó una fecha futura
+            # Usamos self.request.data directamente porque este campo no está en el Serializer
+            proxima_fecha = self.request.data.get('nueva_fecha_programada')
+            
+            if proxima_fecha:
+                Mantencion.objects.create(
+                    equipo=equipo,
+                    fecha_programada=proxima_fecha,
+                    descripcion=f"Mantención preventiva programada (Continuación de #{instance.id})",
+                    estado='PENDIENTE'
+                )
+        
+        # Si se pone EN_PROCESO, bloqueamos el equipo
+        elif instance.estado == 'EN_PROCESO':
+            instance.equipo.estado = 'MANTENCION'
+            instance.equipo.save()
+
+        def perform_create(self, serializer):
+            instance = serializer.save()
+            # Si se crea directamente como EN_PROCESO, bloqueamos el equipo
+            if instance.estado == 'EN_PROCESO':
+                instance.equipo.estado = 'MANTENCION'
+                instance.equipo.save()
+
+class RequerimientoViewSet(viewsets.ModelViewSet):
+    """
+    Solicitudes de nuevos equipos.
+    """
+    queryset = Requerimiento.objects.all().order_by('-fecha_solicitud')
+    serializer_class = RequerimientoSerializer
+    
+    # Aquí usamos DjangoModelPermissions.
+    # RECUERDA: Darle permiso 'add_requerimiento' al grupo PROFESOR en el Admin.
+    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+
+    def perform_create(self, serializer):
+        serializer.save(usuario=self.request.user)
